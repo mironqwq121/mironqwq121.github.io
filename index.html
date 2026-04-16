@@ -3,45 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>БоброУслуги 49.9.6 | Final Fix</title>
+    <title>БоброУслуги 49.8 | GOLD EDITION</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        :root { --user-color: #0054a1; --admin-red: #d32f2f; --bg: #f0f2f5; --card-bg: #ffffff; --text: #1c1e21; --green: #388e3c; --wb: #7b1fa2; --tg: #0088cc; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; }
+        :root { --main: #0054a1; --admin: #d32f2f; --bg: #f0f2f5; --card: #ffffff; --green: #388e3c; --wb: #7b1fa2; --tg: #0088cc; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; overflow-x: hidden; }
         .hidden { display: none !important; }
-        header { padding: 15px 10px; display: flex; justify-content: space-between; align-items: center; color: white; background: var(--user-color); position: sticky; top: 0; z-index: 100; gap: 5px; }
+        
+        /* ЗАГРУЗКА */
+        #loading-screen { position: fixed; inset: 0; background: var(--main); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
+        .spinner { width: 45px; height: 45px; border: 5px solid rgba(255,255,255,0.2); border-top: 5px solid white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        header { padding: 15px; background: var(--main); color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .container { max-width: 500px; margin: auto; padding: 12px; }
-        .card { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #ddd; }
-        .nav-tabs { display: flex; gap: 4px; background: #e4e6eb; padding: 4px; border-radius: 10px; margin: 10px; overflow-x: auto; }
-        .tab-btn { flex: 1; padding: 10px 5px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 11px; white-space: nowrap; transition: 0.2s; }
-        .tab-btn.active { background: white; color: var(--user-color); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, select { padding: 12px; border: 1px solid #ced4da; border-radius: 8px; width: 100%; box-sizing: border-box; margin: 5px 0; font-size: 14px; }
-        .btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        .btn-header { color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 10px; font-size: 11px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .btn-exit { background: #ff4d4d; border: 1px solid #b30000; }
-        .btn-pass { background: #ffa000; border: 1px solid #e65100; }
-        #chat-window { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; display: flex; flex-direction: column; }
-        #passport-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; align-items: center; justify-content: center; }
-        #passport-blank { width: 310px; background: #e3f2fd; border: 3px solid var(--user-color); border-radius: 15px; padding: 20px; }
+        .card { background: var(--card); padding: 16px; border-radius: 15px; margin-bottom: 12px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .nav-tabs { display: flex; gap: 4px; background: #e4e6eb; padding: 4px; border-radius: 12px; margin: 10px; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 12px 8px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; font-size: 11px; white-space: nowrap; }
+        .tab-btn.active { background: white; color: var(--main); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        input { padding: 14px; border: 1px solid #ced4da; border-radius: 10px; width: 100%; box-sizing: border-box; margin: 6px 0; outline: none; }
+        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; margin-top: 8px; transition: 0.2s; }
+        .btn:active { transform: scale(0.97); }
+
+        /* ПАСПОРТ */
+        #passport-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 5000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        #passport-blank { width: 310px; background: #e3f2fd; border: 4px solid var(--main); border-radius: 20px; padding: 25px; color: #0d47a1; position: relative; }
+        
+        /* ЧАТ */
+        #chat-window { position: fixed; inset: 0; background: white; z-index: 4000; display: none; flex-direction: column; }
+        .msg { padding: 10px 14px; border-radius: 15px; max-width: 80%; margin-bottom: 5px; font-size: 14px; }
+        .me { align-self: flex-end; background: #e1f5fe; border-bottom-right-radius: 2px; }
+        .him { align-self: flex-start; background: #f5f5f5; border-bottom-left-radius: 2px; }
     </style>
 </head>
 <body>
 
-<div id="auth-screen" class="container" style="margin-top: 50px;">
-    <div class="card" style="text-align: center;">
-        <h2 style="color: var(--user-color);">БоброУслуги 49.9.6</h2>
+<div id="loading-screen">
+    <div class="spinner"></div>
+    <h3 style="margin-top:20px; letter-spacing:2px;">СИНХРОНИЗАЦИЯ...</h3>
+</div>
+
+<div id="auth-screen" class="container hidden" style="margin-top: 50px;">
+    <div class="card" style="text-align: center; padding: 30px 20px;">
+        <h1 style="color: var(--main); margin:0;">🦫 БоброУслуги</h1>
+        <p style="font-size:12px; color:#777; margin-bottom:20px;">Premium Stable 49.8</p>
         <input type="text" id="login-name" placeholder="Имя">
         <input type="password" id="login-pass" placeholder="Пароль">
-        <button onclick="handleLogin()" class="btn" style="background:var(--user-color); color:white;">ВОЙТИ</button>
+        <button onclick="handleLogin()" class="btn" style="background:var(--main);">ВОЙТИ</button>
     </div>
 </div>
 
 <div id="app" class="hidden">
     <header>
-        <b style="font-size: 14px;">🦫 <span id="display-name"></span></b>
-        <div style="display: flex; gap: 5px;">
-            <button onclick="changeMyPassword()" class="btn-header btn-pass">🔑 ПАРОЛЬ</button>
-            <button onclick="forceLogout()" class="btn-header btn-exit">ВЫЙТИ</button>
-        </div>
+        <b>🦫 <span id="display-name"></span></b>
+        <button onclick="location.reload()" style="background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:5px 10px; border-radius:8px; font-size:10px;">ВЫХОД</button>
     </header>
 
     <div class="nav-tabs">
@@ -54,224 +71,288 @@
 
     <div class="container">
         <div id="tab-gos">
-            <div id="user-fines-container"></div>
-            <div class="card" style="border-left: 5px solid gold;">
-<h3>📂 Мои документы</h3>
-                <button onclick="openPassportModal()" class="btn" style="background:var(--user-color); color:white;">📄 ОТКРЫТЬ ПАСПОРТ</button>
+            <div id="notifications-area"></div>
+            <div class="card" style="border-left: 6px solid gold;">
+                <h3>📂 Мои документы</h3>
+                <button onclick="openPassport()" class="btn" style="background:var(--main);">📄 ПОСМОТРЕТЬ ПАСПОРТ</button>
             </div>
             <div class="card">
-                <h3>📜 Бланк на паспорт</h3>
-                <input type="text" id="p-name" placeholder="Имя">
+                <h3>📜 Анкета на паспорт</h3>
+                <input type="text" id="p-name" placeholder="Имя Фамилия">
                 <input type="number" id="p-age" placeholder="Возраст">
-                <input type="text" id="p-date" placeholder="Дата рождения">
                 <input type="text" id="p-loc" placeholder="Место проживания">
-                <button onclick="sendPassportReq()" class="btn" style="background:var(--green); color:white;">ОТПРАВИТЬ АНКЕТУ</button>
+                <button onclick="sendAnketa()" class="btn" style="background:var(--green);">ОТПРАВИТЬ ЗАЯВКУ</button>
             </div>
         </div>
 
         <div id="tab-chat" class="hidden">
-            <div id="miron-spy-panel" class="hidden"><button class="btn" style="background:gold;" onclick="activateSpy()">👁 ШПИОНСКИЙ СКАНЕР</button></div>
+            <div id="miron-spy-panel" class="hidden">
+                <button class="btn" style="background:gold; color:black; margin-bottom:10px;" onclick="activateSpy()">👁 СКАНЕР ПЕРЕПИСОК</button>
+            </div>
             <div id="chat-list-container"></div>
         </div>
 
         <div id="tab-wb" class="hidden">
-            <div class="card" style="background:var(--wb); color:white;">Баланс: <span class="user-bal-val">0</span> ББ</div>
+            <div class="card" style="background:var(--wb); color:white; text-align:center;">
+                <p style="margin:0; opacity:0.8;">Баланс ВБ</p>
+                <h2><span class="user-bal-val">0</span> ББ</h2>
+            </div>
             <div id="wb-market-list"></div>
             <div class="card">
-                <h3>🛍 Выставить товар</h3>
-                <input type="text" id="m-title" placeholder="Название товара">
+                <h3>📦 Выставить товар</h3>
+                <input type="text" id="m-title" placeholder="Что продаете?">
                 <input type="number" id="m-price" placeholder="Цена в ББ">
-                <button onclick="uploadProduct()" class="btn" style="background:var(--wb); color:white;">ВЫСТАВИТЬ</button>
+                <button onclick="uploadProduct()" class="btn" style="background:var(--wb);">ОПУБЛИКОВАТЬ</button>
             </div>
         </div>
 
         <div id="tab-bank" class="hidden">
-            <div class="card" style="background:var(--green); color:white; text-align:center;"><h2><span class="user-bal-val">0</span> ББ</h2></div>
+            <div class="card" style="background:var(--green); color:white; text-align:center;">
+                <p style="margin:0; opacity:0.8;">Мой счёт</p>
+                <h1><span class="user-bal-val">0</span> ББ</h1>
+            </div>
             <div class="card">
-                <input type="text" id="b-target" placeholder="Кому (Имя)">
+                <input type="text" id="b-target" placeholder="Получатель">
                 <input type="number" id="b-sum" placeholder="Сумма">
-                <button onclick="bankTransfer()" class="btn" style="background:var(--green); color:white;">ОТПРАВИТЬ</button>
+                <button onclick="transfer()" class="btn" style="background:var(--green);">ПЕРЕВЕСТИ</button>
             </div>
         </div>
 
         <div id="tab-admin" class="hidden">
-            <div class="card" style="border: 2px solid var(--admin-red)">
-                <h3 style="color:var(--admin-red);">🔨 ВЫПИСАТЬ ШТРАФ</h3>
-                <select id="f-target"></select>
-                <input type="number" id="f-sum" placeholder="Сумма">
-                <input type="text" id="f-reason" placeholder="Причина">
-                <button onclick="sendFine()" class="btn" style="background:var(--admin-red); color:white;">ОШТРАФОВАТЬ</button>
-            </div>
             <div id="miron-only-tools" class="hidden">
-                <div class="card" style="border: 2px solid var(--user-color)">
+                <div class="card">
                     <h3>🔑 МАСТЕР-КЛЮЧ</h3>
-                    <div id="master-key-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;"></div>
+                    <div id="master-key-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:5px;"></div>
                 </div>
-                <div class="card" style="border: 2px solid var(--admin-red)">
-                    <h3 style="color:var(--admin-red);">🚫 АННУЛИРОВАТЬ ПАСПОРТ</h3>
-                    <select id="revoke-target"></select>
-                    <button onclick="revokePassport()" class="btn" style="background:var(--admin-red); color:white;">ЗАБРАТЬ ПАСПОРТ</button>
-                </div>
-                <div class="card" style="border: 2px solid var(--green)">
-                    <h3>💰 СТАНОК</h3>
-                    <input type="number" id="print-amt" placeholder="Сумма ББ">
-                    <button onclick="printAnyBbs()" class="btn" style="background:var(--green); color:white;">ПЕЧАТЬ</button>
+                <div class="card">
+                    <h3>💰 ПРИНТЕР ББ</h3>
+                    <input type="number" id="print-amt" placeholder="Сколько добавить?">
+                    <button onclick="printMoney()" class="btn" style="background:var(--green);">НАПЕЧАТАТЬ</button>
                 </div>
             </div>
-            <div class="card"><h3>🔔 ЗАЯВКИ НА ПАСПОРТ</h3><div id="admin-notifs-list"></div></div>
+            <div class="card">
+                <h3 style="color:var(--admin);">🔨 ВЫПИСАТЬ ШТРАФ</h3>
+                <input type="text" id="f-target" placeholder="Имя">
+                <input type="number" id="f-sum" placeholder="Сумма">
+                <button onclick="sendFine()" class="btn" style="background:var(--admin);">ОШТРАФОВАТЬ</button>
+            </div>
+            <div class="card">
+                <h3>🔔 НОВЫЕ ЗАЯВКИ</h3>
+                <div id="admin-list"></div>
+            </div>
         </div>
     </div>
 </div>
 
-<div id="passport-overlay" class="hidden" onclick="this.classList.add('hidden')">
+<div id="passport-overlay" onclick="this.style.display='none'">
     <div id="passport-blank" onclick="event.stopPropagation()">
-<h2 style="text-align:center; color:var(--user-color);">ПАСПОРТ БОБРА</h2>
-        <div style="display:flex; gap:12px;">
-            <div style="width:70px; height:90px; background:#ddd; display:flex; align-items:center; justify-content:center; font-size:40px; border-radius:5px;">🦫</div>
-            <div style="font-size:13px; line-height:1.5;">
-                <b>ИМЯ:</b> <span id="v-name"></span><br>
-                <b>ВОЗРАСТ:</b> <span id="v-age"></span><br>
-                <b>ДАТА:</b> <span id="v-date"></span><br>
-                <b>МЕСТО:</b> <span id="v-loc"></span><br>
-                <b>ID:</b> <span id="v-id"></span>
-            </div>
+        <h2 style="text-align:center; border-bottom:2px solid #0d47a1;">ПАСПОРТ БОБРА</h2>
+        <div style="margin-top:15px; font-size:15px; line-height:1.8;">
+            <b>ИМЯ:</b> <span id="v-name"></span><br>
+            <b>ВОЗРАСТ:</b> <span id="v-age"></span><br>
+            <b>МЕСТО:</b> <span id="v-loc"></span><br>
+            <b>ID:</b> <span id="v-id"></span>
         </div>
-        <button onclick="document.getElementById('passport-overlay').classList.add('hidden')" class="btn" style="background:var(--user-color); color:white; margin-top:15px;">ЗАКРЫТЬ</button>
+        <button onclick="document.getElementById('passport-overlay').style.display='none'" class="btn" style="background:var(--main); margin-top:20px;">ЗАКРЫТЬ</button>
     </div>
 </div>
 
-<div id="chat-window" class="hidden">
-    <div style="padding:15px; background:var(--tg); color:white; display:flex; align-items:center; justify-content:space-between;">
+<div id="chat-window">
+    <div style="padding:15px; background:var(--tg); color:white; display:flex; justify-content:space-between; align-items:center;">
         <button onclick="closeChat()" style="background:none; border:none; color:white; font-size:24px;">⬅</button>
-        <b id="chat-title">Чат</b>
+        <b id="chat-title">Чат</b><div style="width:24px;"></div>
     </div>
-    <div id="chat-messages" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:8px;"></div>
-    <div style="padding:10px; display:flex; gap:5px; background:#eee;">
-        <input type="text" id="msg-input" placeholder="Сообщение...">
-        <button onclick="sendMessage()" class="btn" style="width:60px; margin:0; background:var(--tg); color:white;">🚀</button>
+    <div id="chat-messages" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; background:#e5ddd5;"></div>
+    <div style="padding:10px; display:flex; gap:8px; background:#eee; border-top:1px solid #ccc;">
+        <input type="text" id="msg-input" placeholder="Сообщение..." style="margin:0;">
+        <button onclick="sendMessage()" class="btn" style="width:70px; margin:0; background:var(--tg);">🚀</button>
     </div>
 </div>
 
 <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBv4E4qHpzYIPQMx48iLMNyfCPCFZQ9TOI",
+        authDomain: "bobro-uslugi-3fe4d.firebaseapp.com",
+        databaseURL: "https://bobro-uslugi-3fe4d-default-rtdb.firebaseio.com",
+        projectId: "bobro-uslugi-3fe4d",
+        storageBucket: "bobro-uslugi-3fe4d.firebasestorage.app",
+        messagingSenderId: "791582806185",
+        appId: "1:791582806185:web:205da453ca68c6299059b8"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     let currentUser = "";
     let activeChat = "";
-    let users = JSON.parse(localStorage.getItem('beaver_48_db')) || {"Мирон": { pass: "miron121", balance: 100000 }, "Маша": { pass: "nenzuko", balance: 5000 }, "Ева": { pass: "0000", balance: 1000 }, "Сабрина": { pass: "0000", balance: 1000 }, "Соня": { pass: "0000", balance: 1000 }, "Марта": { pass: "0000", balance: 1000 }};
-    let requests = JSON.parse(localStorage.getItem('beaver_48_req')) || [];
-    let messages = JSON.parse(localStorage.getItem('beaver_48_msgs')) || [];
-    let market = JSON.parse(localStorage.getItem('beaver_48_market')) || [];
+    let users = {}, requests = [], messages = [], market = [], fines = [];
+    let isReady = false;
 
-    function save() {
-        localStorage.setItem('beaver_48_db', JSON.stringify(users));
-        localStorage.setItem('beaver_48_req', JSON.stringify(requests));
-        localStorage.setItem('beaver_48_msgs', JSON.stringify(messages));
-        localStorage.setItem('beaver_48_market', JSON.stringify(market));
-        render();
+    // СИНХРОНИЗАЦИЯ
+    db.ref('/').on('value', (s) => {
+        const d = s.val() || {};
+        users = d.users || { "Мирон": { pass: "miron121", balance: 500000 }, "Маша": { pass: "nenzuko", balance: 10000 } };
+        requests = Array.isArray(d.requests) ? d.requests : [];
+        messages = Array.isArray(d.messages) ? d.messages : [];
+        market = Array.isArray(d.market) ? d.market : [];
+        fines = Array.isArray(d.fines) ? d.fines : [];
+        
+        if (!isReady) {
+            isReady = true;
+            document.getElementById('loading-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('auth-screen').classList.remove('hidden');
+            }, 500);
+        }
+        if (currentUser) render();
+    });
+
+    function push() {
+        db.ref('/').update({ users, requests, messages, market, fines })
+            .then(() => alert("успешно"))
+            .catch(() => alert("ошибка базы"));
     }
 
     function handleLogin() {
-        const n = document.getElementById('login-name').value;
+        const n = document.getElementById('login-name').value.trim();
         const p = document.getElementById('login-pass').value;
-        if(users[n] && users[n].pass === p) {
+        if (users[n] && users[n].pass === p) {
             currentUser = n;
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('display-name').innerText = currentUser;
-            checkPrivs(); showTab('gos');
-        } else alert("Ошибка входа!");
-    }
-
-    function forceLogout() {
-        currentUser = "";
-        document.getElementById('app').classList.add('hidden');
-        document.getElementById('auth-screen').classList.remove('hidden');
-        document.getElementById('login-name').value = "";
-        document.getElementById('login-pass').value = "";
-    }
-
-    function changeMyPassword() {
-        const newPass = prompt("Введите новый пароль для " + currentUser + ":");
-        if(newPass && newPass.trim() !== "") {
-            users[currentUser].pass = newPass;
-            save(); alert("Пароль изменен!");
-        }
+            checkPrivs(); render(); alert("успешно");
+        } else alert("ошибка");
     }
 
     function render() {
-        if(!currentUser) return;
-        document.querySelectorAll('.user-bal-val').forEach(el => el.innerText = users[currentUser].balance);
+        document.querySelectorAll('.user-bal-val').forEach(el => el.innerText = (users[currentUser].balance || 0).toLocaleString());
         
-        const cList = document.getElementById('chat-list-container');
-cList.innerHTML = '<div class="card" onclick="openChat(\'all\')">📢 ОБЩИЙ ЧАТ</div>';
-        Object.keys(users).forEach(u => { if(u !== currentUser) cList.innerHTML += `<div class="card" onclick="openChat('${u}')">👤 Чат: ${u}</div>`; });
-
+        // Рендер маркета
         document.getElementById('wb-market-list').innerHTML = market.map(i => `
-            <div class="card"><b>${i.title}</b> — ${i.price} ББ 
-            <button onclick="buyItem(${i.id})" class="btn" style="background:var(--wb); color:white;">Купить</button></div>`).join('');
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><b>${i.title}</b><br><small>Продавец: ${i.seller}</small></div>
+                <button class="btn" style="background:var(--wb); width:auto; margin:0; padding:8px 12px;" onclick="buyItem(${i.id})">${i.price} ББ</button>
+            </div>
+        `).join('') || "<p style='text-align:center; color:#999;'>Товаров нет</p>";
 
-        const isAdmin = (currentUser === "Мирон" || currentUser === "Маша");
-        if(isAdmin) {
-            document.getElementById('f-target').innerHTML = Object.keys(users).map(u => `<option value="${u}">${u}</option>`).join('');
-            document.getElementById('revoke-target').innerHTML = Object.keys(users).map(u => `<option value="${u}">${u}</option>`).join('');
-            document.getElementById('admin-notifs-list').innerHTML = requests.filter(r => r.type === 'ПАСПОРТ' && r.status === 'waiting').map(r => `<div class="card">${r.user} <button onclick="approvePassport(${r.id})">ОДОБРИТЬ</button></div>`).join('') || "Нет заявок";
-            const mKey = document.getElementById('master-key-grid');
-            if(mKey) mKey.innerHTML = Object.keys(users).map(u => `<button class="btn" style="background:#eee; font-size:10px; padding:5px;" onclick="currentUser='${u}'; checkPrivs(); render();">${u}</button>`).join('');
-        }
+        // Рендер чатов
+        const cList = document.getElementById('chat-list-container');
+        cList.innerHTML = '<div class="card" style="background:var(--tg); color:white;" onclick="openChat(\'all\')">📢 ОБЩИЙ ЧАТ</div>';
+        Object.keys(users).forEach(u => { if(u !== currentUser) cList.innerHTML += `<div class="card" onclick="openChat('${u}')">👤 ${u}</div>`; });
 
-        const fBox = document.getElementById('user-fines-container');
-        const myFines = requests.filter(r => r.user === currentUser && r.type === 'ШТРАФ' && r.status === 'waiting');
-        fBox.innerHTML = myFines.map(f => `<div class="card" style="border:2px solid red; background:#fff0f0;"><b>⚠️ ШТРАФ: ${f.sum} ББ</b><br><small>${f.reason}</small><button onclick="payFine(${f.id})" class="btn" style="background:var(--green); color:white;">ОПЛАТИТЬ</button></div>`).join('');
+        // Рендер заявок (админ)
+        document.getElementById('admin-list').innerHTML = requests.filter(r => r.status === 'waiting').map(r => `
+            <div class="card">${r.user}: ${r.name} <button onclick="approvePassport(${r.id})" style="background:var(--green); color:white; border:none; border-radius:5px; padding:5px 10px; float:right;">ОК</button></div>
+        `).join('') || "Нет новых заявок";
+
+        // Мастер-ключи
+        const mGrid = document.getElementById('master-key-grid');
+        if(mGrid) mGrid.innerHTML = Object.keys(users).map(u => `<button class="btn" style="background:#666; font-size:10px;" onclick="switchUser('${u}')">${u}</button>`).join('');
+
+        if (document.getElementById('chat-window').style.display === 'flex') renderMsgs();
     }
 
-    function sendPassportReq() {
-        const d = { id:Date.now(), user:currentUser, type:"ПАСПОРТ", status:"waiting", pName:document.getElementById('p-name').value, pAge:document.getElementById('p-age').value, pDate:document.getElementById('p-date').value, pLoc:document.getElementById('p-loc').value };
-        if(!d.pName) return alert("Заполни имя!");
-        requests.push(d); save(); alert("Отправлено!");
+    // ЛОГИКА ОПЕРАЦИЙ
+    function sendAnketa() {
+        const name = document.getElementById('p-name').value;
+        const age = document.getElementById('p-age').value;
+        const loc = document.getElementById('p-loc').value || "Лес";
+        if (name && age) {
+            requests.push({ id: Date.now(), user: currentUser, name, age, loc, status: 'waiting' });
+            push();
+            document.getElementById('p-name').value = ""; document.getElementById('p-age').value = "";
+        } else alert("ошибка: заполни поля");
     }
 
-    function openPassportModal() {
-        const p = requests.find(r => r.user === currentUser && r.type === 'ПАСПОРТ' && r.status === 'approved');
-        if(p) {
-            document.getElementById('v-name').innerText = p.pName; document.getElementById('v-age').innerText = p.pAge; document.getElementById('v-date').innerText = p.pDate; document.getElementById('v-loc').innerText = p.pLoc;
-            document.getElementById('v-id').innerText = p.id.toString().slice(-6); document.getElementById('passport-overlay').classList.remove('hidden');
-        } else alert("Паспорт не одобрен!");
+    function openPassport() {
+        const p = requests.slice().reverse().find(r => r.user === currentUser && r.status === 'approved');
+        if (p) {
+            document.getElementById('v-name').innerText = p.name;
+            document.getElementById('v-age').innerText = p.age;
+            document.getElementById('v-loc').innerText = p.loc;
+            document.getElementById('v-id').innerText = p.id.toString().slice(-6);
+            document.getElementById('passport-overlay').style.display = 'flex';
+            alert("успешно");
+        } else alert("ошибка: паспорт не одобрен");
     }
 
-    function approvePassport(id) { const r = requests.find(x => x.id === id); if(r) { r.status = 'approved'; save(); } }
-    function revokePassport() { const t = document.getElementById('revoke-target').value; requests = requests.filter(r => !(r.user === t && r.type === 'ПАСПОРТ')); save(); alert("Удалено!"); }
-    function sendFine() { const t = document.getElementById('f-target').value; const s = parseInt(document.getElementById('f-sum').value); const r = document.getElementById('f-reason').value; if(s > 0 && r) { requests.push({id:Date.now(), user:t, type:'ШТРАФ', status:'waiting', sum:s, reason:r}); save(); alert("Выписан!"); } }
-    function payFine(id) { const f = requests.find(x => x.id === id); if(users[currentUser].balance >= f.sum) { users[currentUser].balance -= f.sum; requests = requests.filter(r => r.id !== id); save(); alert("Оплачено!"); } else alert("Нет ББ!"); }
-function uploadProduct() { const t = document.getElementById('m-title').value; const p = parseInt(document.getElementById('m-price').value); if(t && p) { market.push({id:Date.now(), title:t, price:p, seller:currentUser}); save(); } }
-    function buyItem(id) { const i = market.find(x => x.id === id); if(i && users[currentUser].balance >= i.price) { users[currentUser].balance -= i.price; users[i.seller].balance += i.price; market = market.filter(x => x.id !== id); save(); alert("Куплено!"); } }
-    function bankTransfer() { const t = document.getElementById('b-target').value; const s = parseInt(document.getElementById('b-sum').value); if(users[t] && s > 0 && users[currentUser].balance >= s) { users[currentUser].balance -= s; users[t].balance += s; save(); alert("Переведено!"); } }
-    function printAnyBbs() { const a = parseInt(document.getElementById('print-amt').value); if(a > 0) { users[currentUser].balance += a; save(); } }
-
-    function showTab(t) {
-        ['gos', 'chat', 'wb', 'bank', 'admin'].forEach(tab => {
-            const el = document.getElementById('tab-' + tab);
-            if(el) el.classList.add('hidden');
-            const btn = document.getElementById('btn-' + tab);
-            if(btn) btn.classList.remove('active');
-        });
-        document.getElementById('tab-' + t).classList.remove('hidden');
-        document.getElementById('btn-' + t).classList.add('active');
-        render();
+    function approvePassport(id) {
+        const r = requests.find(x => x.id === id);
+        if (r) { r.status = 'approved'; push(); }
     }
 
-    function openChat(id) { activeChat = id; document.getElementById('chat-window').classList.remove('hidden'); document.getElementById('chat-title').innerText = id; renderMsgs(); }
-    function closeChat() { document.getElementById('chat-window').classList.add('hidden'); }
+    function transfer() {
+        const t = document.getElementById('b-target').value.trim();
+        const s = Number(document.getElementById('b-sum').value);
+        if (users[t] && s > 0 && users[currentUser].balance >= s) {
+            users[currentUser].balance -= s;
+            users[t].balance = (users[t].balance || 0) + s;
+            push();
+        } else alert("ошибка");
+    }
+
+    function uploadProduct() {
+        const t = document.getElementById('m-title').value;
+        const p = Number(document.getElementById('m-price').value);
+        if (t && p > 0) { market.push({ id: Date.now(), title: t, price: p, seller: currentUser }); push(); }
+    }
+
+    function buyItem(id) {
+        const i = market.find(x => x.id === id);
+        if (i && users[currentUser].balance >= i.price) {
+            users[currentUser].balance -= i.price;
+            users[i.seller].balance += i.price;
+            market = market.filter(x => x.id !== id);
+            push();
+        } else alert("ошибка: не хватает ББ");
+    }
+
+    function printMoney() {
+        const a = Number(document.getElementById('print-amt').value);
+        if(a > 0) { users[currentUser].balance += a; push(); }
+    }
+
+    function sendFine() {
+        const t = document.getElementById('f-target').value;
+        const s = Number(document.getElementById('f-sum').value);
+        if(users[t]) { users[t].balance -= s; push(); }
+    }
+
+    function switchUser(u) { currentUser = u; document.getElementById('display-name').innerText = currentUser; checkPrivs(); render(); alert("успешно: " + u); }
+
+    // ЧАТ ЛОГИКА
+    function openChat(id) { activeChat = id; document.getElementById('chat-window').style.display = 'flex'; renderMsgs(); }
+    function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
+    function sendMessage() {
+        const val = document.getElementById('msg-input').value.trim();
+        if (val) { messages.push({ from: currentUser, to: activeChat, text: val }); document.getElementById('msg-input').value = ""; push(); }
+    }
     function renderMsgs() {
         const box = document.getElementById('chat-messages');
-        const filtered = messages.filter(m => (activeChat==='all' && m.to==='all') || (m.from===currentUser && m.to===activeChat) || (m.from===activeChat && m.to===currentUser));
-        box.innerHTML = filtered.map(m => `<div style="align-self:${m.from===currentUser?'flex-end':'flex-start'}; background:${m.from===currentUser?'#e1f5fe':'#f5f5f5'}; padding:8px; border-radius:10px;"><b>${m.from}:</b> ${m.text}</div>`).join('');
+        const f = messages.filter(m => (activeChat==='all' && m.to==='all') || (m.from===currentUser && m.to===activeChat) || (m.from===activeChat && m.to===currentUser));
+        box.innerHTML = f.map(m => `<div class="msg ${m.from===currentUser?'me':'him'}"><b>${m.from}:</b> ${m.text}</div>`).join('');
         box.scrollTop = box.scrollHeight;
     }
-    function sendMessage() { const val = document.getElementById('msg-input').value; if(val) { messages.push({from:currentUser, to:activeChat, text:val}); document.getElementById('msg-input').value=""; save(); renderMsgs(); } }
+    function activateSpy() {
+        const t1 = prompt("Кто смотрит?"); const t2 = prompt("Чей чат?");
+        if(users[t1] && users[t2]) { currentUser = t1; activeChat = t2; render(); openChat(t2); }
+    }
+
+    function showTab(t) {
+        document.querySelectorAll('#tab-gos, #tab-chat, #tab-wb, #tab-bank, #tab-admin').forEach(el => el.classList.add('hidden'));
+        document.getElementById('tab-' + t).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + t).classList.add('active');
+    }
+
     function checkPrivs() {
         const isAdm = (currentUser === "Мирон" || currentUser === "Маша");
         document.getElementById('btn-admin').classList.toggle('hidden', !isAdm);
         document.getElementById('miron-only-tools').classList.toggle('hidden', currentUser !== "Мирон");
+        document.getElementById('miron-spy-panel').classList.toggle('hidden', currentUser !== "Мирон");
     }
-    function activateSpy() { const t1 = prompt("Кто?"); const t2 = prompt("С кем?"); if(t1 && t2) { activeChat = t2; openChat(t2); } }
 </script>
 </body>
 </html>
