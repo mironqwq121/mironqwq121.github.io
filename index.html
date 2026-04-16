@@ -3,157 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>БоброУслуги | FULL ADMIN</title>
+    <title>Управление</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        :root { --main: #0054a1; --bg: #f0f2f5; --card: #ffffff; --text: #333; --ok: #2e7d32; --err: #d32f2f; --wb: #7b1fa2; --black: #000; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
+        :root { --main: #007bff; --bg: #f4f7f6; --card: #ffffff; --text: #333333; --border: #dee2e6; --success: #28a745; --danger: #dc3545; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; }
         .hidden { display: none !important; }
-        
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; z-index: 10000; transition: 0.3s; opacity: 0; pointer-events: none; text-align: center; color: white; font-weight: bold; }
-        #toast.show { opacity: 1; top: 30px; }
-
-        header { padding: 15px; background: var(--main); color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index: 2000; }
-        .container { max-width: 500px; margin: auto; padding: 12px; }
-        .card { background: var(--card); padding: 16px; border-radius: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
-        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #ddd; height: 75px; z-index: 1000; }
-        .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #777; cursor: pointer; }
+        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; z-index: 9999; transition: 0.5s; text-align: center; color: white; background: #333; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        #toast.show { top: 20px; }
+        header { padding: 15px 20px; background: var(--main); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 500px; margin: auto; padding: 15px; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--main); color: white; margin-top: 5px; }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-del { background: var(--danger); width: auto; padding: 5px 10px; margin-left: 5px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; }
+        .passport-blank { background: #fffef0; border: 2px solid #e0c068; border-radius: 8px; display: flex; padding: 15px; gap: 15px; }
+        .pass-photo { width: 80px; height: 100px; background: #ddd; border-radius: 4px; background: url('https://upload.wikimedia.org/wikipedia/commons/6/6b/American_Beaver.jpg') center/cover; }
+        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid var(--border); height: 70px; }
+        .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #999; cursor: pointer; }
         .nav-tab.active { color: var(--main); font-weight: bold; }
-
-        input { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; color: white; margin-top: 5px; }
-        
-        #chat-box { height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 10px; background: #fafafa; border-radius: 10px; display: flex; flex-direction: column; }
-        .msg { margin-bottom: 8px; padding: 8px; border-radius: 10px; background: #e9e9eb; max-width: 85%; }
-        .msg-my { background: var(--main); color: white; align-self: flex-end; }
-        
-        .user-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; font-size: 13px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .news-item { border-left: 4px solid var(--main); padding-left: 10px; margin-bottom: 10px; font-size: 14px; }
+        .history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+        .h-plus { color: var(--success); font-weight: bold; }
+        .h-minus { color: var(--danger); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="toast"></div>
 
-<div id="auth-screen" class="container" style="margin-top: 50px;">
+<div id="auth-screen" class="container" style="margin-top: 80px;">
     <div class="card" style="text-align: center;">
-        <h1 style="color: var(--main);">🦫 БоброУслуги</h1>
+        <h2 style="color: var(--main);">Вход</h2>
         <input type="text" id="l-name" placeholder="Имя">
         <input type="password" id="l-pass" placeholder="Пароль">
-        <button onclick="login()" class="btn" style="background:var(--main);">ВОЙТИ</button>
+        <button onclick="login()" class="btn">Войти</button>
     </div>
 </div>
 
 <div id="app" class="hidden">
     <header>
-        <b>👤 <span id="u-display"></span></b>
-        <button onclick="location.reload()" style="background:none; border:none; color:white; font-size:20px;">🚪</button>
+        <span>👤 <span id="u-display"></span></span>
+        <button onclick="location.reload()" style="background:none; border:none; color:white; cursor:pointer;">Выход</button>
     </header>
 
     <div class="container">
         <div id="tab-gos">
+            <div id="passport-display"></div>
             <div class="card">
-                <h3>📜 Мой Паспорт</h3>
-                <div id="passport-status">Проверка...</div>
-                <div id="passport-view" class="hidden" style="border: 2px dashed var(--main); padding: 10px; border-radius: 10px; margin-top: 10px;">
-                    <p>ФИО: <b id="pv-name"></b></p>
-                    <p>Возраст: <b id="pv-age"></b></p>
-                </div>
+                <h3>📢 Новости и события</h3>
+                <div id="news-feed">Загрузка...</div>
             </div>
-            <div class="card">
-                <h3>✍️ Анкета на паспорт</h3>
-                <input type="text" id="ank-name" placeholder="ФИО">
-                <input type="number" id="ank-age" placeholder="Возраст">
-                <button onclick="sendPassportReq()" class="btn" style="background:var(--main);">ОТПРАВИТЬ</button>
+            <div id="pass-req-form" class="card">
+                <h3>Заявка на паспорт</h3>
+                <input type="text" id="p-name-input" placeholder="Введите ФИО">
+                <button onclick="sendPassportReq()" class="btn">Отправить</button>
+            </div>
+        </div>
+
+        <div id="tab-chat" class="hidden">
+            <div id="chat-box" style="height: 300px; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px;"></div>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="chat-input" placeholder="Сообщение...">
+                <button onclick="sendMsg()" class="btn" style="width:80px; margin:0;">▲</button>
             </div>
         </div>
 
         <div id="tab-work" class="hidden">
-            <div class="card" style="background: var(--ok); color: white;">
-                <h2 id="job-title" style="margin:0;">Безработный</h2>
-                <p>ЗП: <span id="job-pay">0</span> ББ/нед.</p>
-                <button id="claim-salary-btn" onclick="claimSalary()" class="btn" style="background: white; color: var(--ok);">ВЗЯТЬ ЗП</button>
+            <div class="card" style="background: var(--success); color: white;">
+                <h2 id="job-title" style="margin:0;">-</h2>
+                <p>ЗП: <b id="job-pay">0</b> ББ</p>
             </div>
-            <div class="card">
-                <h4>➕ Создать вакансию</h4>
-                <input type="text" id="v-title" placeholder="Профессия">
-                <input type="number" id="v-pay" placeholder="ЗП в неделю">
-                <button onclick="addVac()" class="btn" style="background:var(--ok);">ОПУБЛИКОВАТЬ</button>
-            </div>
+            <h3>Биржа труда</h3>
             <div id="vac-list"></div>
         </div>
 
         <div id="tab-bank" class="hidden">
-            <div class="card" style="background: var(--ok); color: white; text-align: center;">
-                <h1 id="bank-bal">0 ББ</h1>
+            <div class="card" style="text-align: center;">
+                <h1 id="bank-bal" style="color: var(--success); font-size: 40px; margin: 10px 0;">0</h1>
+                <small>Бобра баксов (ББ)</small>
             </div>
             <div class="card">
-                <h3>💸 Перевод</h3>
+                <h3>Перевод</h3>
                 <input type="text" id="tr-to" placeholder="Кому">
                 <input type="number" id="tr-sum" placeholder="Сумма">
-                <button onclick="doTransfer()" class="btn" style="background: var(--ok);">ОТПРАВИТЬ</button>
+                <button onclick="doTransfer()" class="btn btn-success">Перевести</button>
+            </div>
+            <div class="card">
+                <h3>📜 История транзакций</h3>
+                <div id="bank-history-list"></div>
             </div>
         </div>
 
         <div id="tab-wb" class="hidden">
+            <div class="card" style="background: #6f42c1; color: white;"><h3>WildBobr</h3></div>
             <div class="card">
-                <h4>💜 Продать товар</h4>
-                <input type="text" id="m-name" placeholder="Что продаем?">
-                <input type="number" id="m-cost" placeholder="Цена">
-                <button onclick="addMarketItem()" class="btn" style="background:var(--wb);">ВЫСТАВИТЬ</button>
+                <h3>Продать товар</h3>
+                <input type="text" id="wb-item-name" placeholder="Название">
+                <input type="number" id="wb-item-price" placeholder="Цена">
+                <button onclick="postToWB()" class="btn" style="background:#6f42c1;">Выставить</button>
             </div>
             <div id="market-list"></div>
         </div>
 
-        <div id="tab-chat" class="hidden">
-            <div id="chat-box" class="card"></div>
-            <div style="display:flex; gap:5px; margin-top:5px;">
-                <input type="text" id="msg-input" placeholder="Текст...">
-                <button onclick="sendMsg()" class="btn" style="background:var(--main); width:60px;">➜</button>
-            </div>
-        </div>
-
         <div id="tab-admin" class="hidden">
-            <div class="card" style="border: 2px solid var(--err);">
-                <h2 style="color:var(--err)">👑 АДМИН-ПАНЕЛЬ</h2>
-                
-                <div id="adm-miron-only" class="hidden">
-                    <h4>💰 Печать ББ</h4>
-                    <input type="number" id="print-sum" placeholder="Сумма">
-                    <button onclick="printMoney()" class="btn" style="background:var(--black);">ДОБАВИТЬ МНЕ</button>
-                    
-                    <h4>👔 Кадры</h4>
-                    <input type="text" id="hire-user" placeholder="Имя игрока">
-                    <input type="text" id="hire-job" placeholder="Профессия">
-                    <input type="number" id="hire-pay" placeholder="ЗП">
-                    <button onclick="adminHire(true)" class="btn" style="background:var(--ok);">НАЗНАЧИТЬ</button>
-                    <button onclick="adminHire(false)" class="btn" style="background:var(--err);">УВОЛИТЬ</button>
-                    <hr>
+            <div class="card" style="background: #333; color: white;">
+                <h3>👑 Админ-центр</h3>
+                <p>В сети: <span id="online-names"></span></p>
+            </div>
+            <div class="card">
+                <b>🏢 Назначение</b>
+                <input type="text" id="adm-t-1" placeholder="Имя">
+                <input type="text" id="adm-j-n" placeholder="Работа">
+                <input type="number" id="adm-j-p" placeholder="ЗП">
+                <button onclick="setJobAdmin()" class="btn btn-success">Назначить</button>
+            </div>
+            <div class="card">
+                <b>🔨 Увольнение</b>
+                <input type="text" id="adm-t-2" placeholder="Имя">
+                <button onclick="fireJobAdmin()" class="btn btn-danger">Уволить</button>
+            </div>
+            <div class="card">
+                <b>⚖️ Штраф</b>
+                <input type="text" id="adm-t-3" placeholder="Имя">
+                <input type="number" id="adm-fine-v" placeholder="Сумма">
+                <button onclick="issueFineAdmin()" class="btn" style="background:orange;">Штраф</button>
+            </div>
+            <div class="card">
+                <b>💼 Новая вакансия</b>
+                <input type="text" id="new-v-n" placeholder="Название">
+                <input type="number" id="new-v-p" placeholder="ЗП">
+                <button onclick="addVacancyAdmin()" class="btn">Добавить</button>
+            </div>
+            <div id="miron-only" class="hidden">
+                <div class="card" style="border: 2px solid gold;">
+                    <b>💰 Печать денег</b>
+                    <input type="number" id="adm-p-s" placeholder="Сумма">
+                    <button onclick="printMoneyAdmin()" class="btn" style="background:gold; color:black;">Напечатать</button>
                 </div>
-
-                <h4>🔨 Штраф</h4>
-                <input type="text" id="fine-user" placeholder="Кому">
-                <input type="number" id="fine-sum" placeholder="Сколько">
-                <button onclick="sendFine()" class="btn" style="background:var(--err);">ОШТРАФОВАТЬ</button>
-
-                <h4>📋 Заявки на паспорт</h4>
-                <div id="adm-pass-list"></div>
-
-                <h4>👥 Граждане</h4>
-                <div id="users-list-admin" class="card" style="font-size:12px;"></div>
+            </div>
+            <div class="card">
+                <h3>📋 Заявки на паспорт</h3>
+                <div id="admin-pass-requests"></div>
             </div>
         </div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-tab active" onclick="setTab('gos', this)">🏛️<br>Гос</div>
-        <div class="nav-tab" onclick="setTab('work', this)">💼<br>Работа</div>
-        <div class="nav-tab" onclick="setTab('bank', this)">💰<br>Банк</div>
-        <div class="nav-tab" onclick="setTab('wb', this)">🛍️<br>ВБ</div>
-        <div class="nav-tab" onclick="setTab('chat', this)">💬<br>Чат</div>
-        <div class="nav-tab hidden" id="n-admin" onclick="setTab('admin', this)">👑<br>Админ</div>
+        <div class="nav-tab active" onclick="setTab('gos', this)">🏛️ Гос</div>
+        <div class="nav-tab" onclick="setTab('chat', this)">💬 Чат</div>
+        <div class="nav-tab" onclick="setTab('work', this)">💼 Работа</div>
+        <div class="nav-tab" onclick="setTab('bank', this)">💰 Банк</div>
+        <div class="nav-tab" onclick="setTab('wb', this)">🛍️ ВБ</div>
+        <div id="n-admin" class="nav-tab hidden" onclick="setTab('admin', this)">👑 Админ</div>
     </div>
 </div>
 
@@ -169,209 +174,192 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    let user = ""; let data = {};
 
-    let user = "";
-    let data = {};
-
-    function showToast(text, err = false) {
-        const t = document.getElementById('toast');
-        t.innerText = text; t.style.background = err ? "#d32f2f" : "#2e7d32";
+    function showToast(text) {
+        const t = document.getElementById('toast'); t.innerText = text;
         t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    db.ref('/').on('value', (s) => {
-        data = s.val() || {};
-        if (user) updateUI();
-    });
-
-    function login() {
+    async function login() {
         const n = document.getElementById('l-name').value.trim();
         const p = document.getElementById('l-pass').value;
-        if (!n || !p) return showToast("Заполни данные!", true);
-        if (data.users && data.users[n]) {
-            if (data.users[n].pass === p) { user = n; start(); }
-            else showToast("Неверный пароль!", true);
+        if (!n || !p) return showToast("Заполните поля!");
+        const snap = await db.ref('users/' + n).once('value');
+        if (snap.exists()) {
+            if (snap.val().pass === p) { user = n; startApp(); }
+            else showToast("Неверный пароль!");
         } else {
-            db.ref('users/' + n).set({ pass: p, balance: 100, current_job: "Безработный", weekly_pay: 0, last_salary: 0 })
-            .then(() => { user = n; start(); });
+            const isM = (n === "Президент Мирон" || n === "Мирон");
+            await db.ref('users/' + n).set({ pass: p, balance: isM?50000:100, current_job: isM?"Администратор":"Безработный", weekly_pay: isM?5000:0 });
+            user = n; startApp();
         }
     }
 
-    function start() {
+    function startApp() {
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
         document.getElementById('u-display').innerText = user;
-        db.ref('presence/' + user).set(true);
-        db.ref('presence/' + user).onDisconnect().remove();
-        if (user === "Мирон" || user === "Маша") {
+        db.ref('online/' + user).set(true);
+        db.ref('online/' + user).onDisconnect().remove();
+        if (user === "Президент Мирон" || user === "Мирон" || user === "Маша") {
             document.getElementById('n-admin').classList.remove('hidden');
-            if (user === "Мирон") document.getElementById('adm-miron-only').classList.remove('hidden');
+            if (user === "Президент Мирон" || user === "Мирон") document.getElementById('miron-only').classList.remove('hidden');
         }
+        db.ref('/').on('value', (s) => { data = s.val() || {}; updateUI(); });
+        showToast("Добро пожаловать!");
     }
 
     function updateUI() {
-        const u = data.users[user] || {};
-        document.getElementById('bank-bal').innerText = (u.balance || 0) + " ББ";
-        document.getElementById('job-title').innerText = u.current_job;
-        document.getElementById('job-pay').innerText = u.weekly_pay;
+        const u = data.users?.[user] || {};
+        const isAdmin = (user === "Президент Мирон" || user === "Мирон" || user === "Маша");
 
-        // Паспорт
-        const req = (data.requests || []).find(r => r.user === user);
-        const st = document.getElementById('passport-status');
-        const view = document.getElementById('passport-view');
-        if (!req) st.innerText = "❌ Нет паспорта";
-        else if (req.status === 'waiting') st.innerText = "⌛ На проверке";
-        else {
-            st.innerText = "✅ Паспорт готов!";
-            view.classList.remove('hidden');
-            document.getElementById('pv-name').innerText = req.name;
-            document.getElementById('pv-age').innerText = req.age;
+        const pDisp = document.getElementById('passport-display');
+        if (u.passport) {
+            document.getElementById('pass-req-form').classList.add('hidden');
+            pDisp.innerHTML = `<div class='card'><h3>Документ</h3><div class="passport-blank"><div class="pass-photo"></div><div class="pass-info"><b>ФИО:</b> ${u.passport.name}<br><b>ID:</b> ${user}<br><b>Работа:</b> ${u.current_job}</div></div></div>`;
+        } else { pDisp.innerHTML = ""; document.getElementById('pass-req-form').classList.remove('hidden'); }
+
+        const newsFeed = document.getElementById('news-feed');
+        const logs = data.chat ? Object.values(data.chat).slice(-5).reverse() : [];
+        newsFeed.innerHTML = logs.map(l => `<div class="news-item"><b>${l.user}:</b> ${l.text}</div>`).join('') || "Новостей нет.";
+
+        const mList = document.getElementById('market-list');
+        mList.innerHTML = "<h3>Витрина</h3>";
+        if (data.market) {
+            Object.entries(data.market).forEach(([key, m]) => {
+                mList.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><b>${m.name}</b><br><small>${m.cost} ББ (${m.seller})</small></span>
+                    <div>
+                        <button onclick="buyItem('${key}', ${m.cost}, '${m.seller}', '${m.name}')" class="btn btn-success" style="width:auto; margin:0; padding:5px 10px;">Купить</button>
+                        ${isAdmin ? `<button onclick="db.ref('market/${key}').remove()" class="btn btn-del">❌</button>` : ''}
+                    </div>
+                </div>`;
+            });
         }
 
-        // Рендер списков (Работа и ВБ)
-        renderWork();
-        renderWB();
+        const vList = document.getElementById('vac-list');
+        vList.innerHTML = "";
+        if (data.job_vacancies) {
+            Object.entries(data.job_vacancies).forEach(([key, v]) => {
+                vList.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><b>${v.title}</b><br><small>ЗП: ${v.pay}</small></span>
+                    <div>
+                        <button onclick="takeJob('${v.title}', ${v.pay})" class="btn" style="width:auto; margin:0; padding:5px 10px;">Взять</button>
+                        ${isAdmin ? `<button onclick="db.ref('job_vacancies/${key}').remove()" class="btn btn-del">❌</button>` : ''}
+                    </div>
+                </div>`;
+            });
+        }
 
-        // Чат
-        const chat = document.getElementById('chat-box');
-        chat.innerHTML = Object.values(data.messages || {}).slice(-15).map(m => `<div class="msg ${m.u === user ? 'msg-my' : ''}"><b>${m.u}</b>: ${m.t}</div>`).join('');
-        chat.scrollTop = chat.scrollHeight;
+        if (isAdmin) {
+            const onArr = data.online ? Object.keys(data.online) : [];
+            document.getElementById('online-names').innerText = onArr.join(', ');
+            const reqs = data.passport_requests || {};
+            document.getElementById('admin-pass-requests').innerHTML = Object.entries(reqs).map(([id, r]) => 
+                `<div class="card" style="display:flex; justify-content:space-between;"><span>${id}</span> <button onclick="approvePass('${id}')" class="btn btn-success" style="width:auto; margin:0;">Выдать</button></div>`
+            ).join('') || "Заявок нет.";
+        }
 
-        // Список для админов
-        if (user === "Мирон" || user === "Маша") {
-            const list = document.getElementById('users-list-admin');
-            list.innerHTML = Object.keys(data.users).map(name => {
-                const on = data.presence && data.presence[name];
-                return `<div class="user-row"><span>${name}</span><span><span class="dot" style="background:${on?'#4caf50':'#bbb'}"></span> ${on?'Online':'Off'}</span></div>`;
+        document.getElementById('bank-bal').innerText = u.balance || 0;
+        document.getElementById('job-title').innerText = u.current_job || "Безработный";
+        document.getElementById('job-pay').innerText = u.weekly_pay || 0;
+
+        const hList = document.getElementById('bank-history-list');
+        if (u.history) {
+            const hArray = Object.values(u.history).reverse().slice(0, 10);
+            hList.innerHTML = hArray.map(h => {
+                const isPlus = h.includes('+');
+                return `<div class="history-item"><span>${h.split(':')[0]}</span><span class="${isPlus?'h-plus':'h-minus'}">${h.split(':')[1] || ''}</span></div>`;
             }).join('');
-            
-            document.getElementById('adm-pass-list').innerHTML = (data.requests || []).filter(r => r.status === 'waiting').map(r => `
-                <div class="user-row">${r.user} <button onclick="approvePass(${r.id})" style="background:var(--ok); color:white; border:none; padding:3px 7px; border-radius:5px;">OK</button></div>
-            `).join('') || "Нет заявок";
-        }
+        } else { hList.innerHTML = "<small>История пуста</small>"; }
+        
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML = Object.values(data.chat || {}).map(m => `<div><b>${m.user}:</b> ${m.text}</div>`).join('');
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function renderWork() {
-        document.getElementById('vac-list').innerHTML = (data.job_vacancies || []).map((v, i) => `
-            <div class="card" style="display:flex; justify-content:space-between;">
-                <span><b>${v.title}</b><br><small>${v.pay} ББ/нед.</small></span>
-                <div>
-                    <button onclick="takeJob(${i})" style="background:var(--main); color:white; border:none; padding:5px 10px; border-radius:5px;">Взять</button>
-                    ${(v.creator === user || user === "Мирон") ? `<button onclick="delItem('job_vacancies', ${i})" style="background:var(--err); color:white; border:none; padding:5px 10px; border-radius:5px; margin-left:5px;">🗑️</button>` : ''}
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function renderWB() {
-        document.getElementById('market-list').innerHTML = (data.market || []).map((m, i) => `
-            <div class="card" style="display:flex; justify-content:space-between;">
-                <span>🛍️ <b>${m.name}</b><br><small>${m.cost} ББ</small></span>
-                <div>
-                    <button onclick="buyItem(${i})" style="background:var(--wb); color:white; border:none; padding:5px 10px; border-radius:5px;">Купить</button>
-                    ${(m.seller === user || user === "Мирон") ? `<button onclick="delItem('market', ${i})" style="background:var(--err); color:white; border:none; padding:5px 10px; border-radius:5px; margin-left:5px;">🗑️</button>` : ''}
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function addVac() {
-        const t = document.getElementById('v-title').value;
-        const p = document.getElementById('v-pay').value;
-        if(t && p) {
-            let v = data.job_vacancies || []; v.push({ title: t, pay: p, creator: user });
-            db.ref('job_vacancies').set(v); showToast("Вакансия добавлена!");
-        }
-    }
-
-    function addMarketItem() {
-        const n = document.getElementById('m-name').value;
-        const c = document.getElementById('m-cost').value;
-        if(n && c) {
-            let m = data.market || []; m.push({ name: n, cost: c, seller: user });
-            db.ref('market').set(m); showToast("Товар на полке!");
-        }
-    }
-
-    function delItem(path, i) {
-        let arr = data[path]; arr.splice(i, 1);
-        db.ref(path).set(arr).then(() => showToast("Удалено"));
-    }
-
-    function takeJob(i) {
-        const v = data.job_vacancies[i];
-        db.ref('users/' + user).update({ current_job: v.title, weekly_pay: v.pay });
-        showToast("Вы устроились!");
-    }
-
-    function buyItem(i) {
-        const it = data.market[i];
-        if (data.users[user].balance >= it.cost) {
-            db.ref('users/' + user + '/balance').set(data.users[user].balance - it.cost);
-            db.ref('users/' + it.seller + '/balance').set((data.users[it.seller].balance || 0) + Number(it.cost));
-            delItem('market', i); showToast("Куплено!");
-        } else showToast("Мало ББ", true);
-    }
-
-    function adminHire(isH) {
-        const target = document.getElementById('hire-user').value.trim();
-        if (!data.users[target]) return showToast("Нет такого бобра", true);
-        db.ref('users/' + target).update({
-            current_job: isH ? document.getElementById('hire-job').value : "Безработный",
-            weekly_pay: isH ? document.getElementById('hire-pay').value : 0
-        });
-        showToast("Данные обновлены");
-    }
-
-    function sendFine() {
-        const t = document.getElementById('fine-user').value.trim();
-        const s = Number(document.getElementById('fine-sum').value);
-        if (data.users[t]) {
-            db.ref('users/' + t + '/balance').set(data.users[t].balance - s);
-            showToast("Штраф выписан");
-        }
-    }
-
-    function printMoney() {
-        const s = Number(document.getElementById('print-sum').value);
-        db.ref('users/Мирон/balance').set((data.users['Мирон'].balance || 0) + s);
-        showToast("Напечатано!");
-    }
-
-    function sendPassportReq() {
-        const nm = document.getElementById('ank-name').value;
-        const ag = document.getElementById('ank-age').value;
-        let reqs = data.requests || [];
-        reqs.push({ id: Date.now(), user: user, name: nm, age: ag, status: 'waiting' });
-        db.ref('requests').set(reqs); showToast("Отправлено!");
-    }
-
-    function approvePass(id) {
-        let rs = data.requests; let r = rs.find(x => x.id === id);
-        if(r) r.status = 'approved'; db.ref('requests').set(rs);
+    function buyItem(id, cost, seller, name) {
+        if (data.users[user].balance < cost) return showToast("Недостаточно ББ!");
+        db.ref('users/'+user+'/balance').transaction(b => b - cost);
+        if (seller !== "Система") db.ref('users/'+seller+'/balance').transaction(b => (b || 0) + cost);
+        db.ref('users/'+user+'/history').push(`Покупка ${name}: -${cost}`);
+        if (seller !== "Система") db.ref('users/'+seller+'/history').push(`Продажа ${name} (${user}): +${cost}`);
+        db.ref('market/'+id).remove();
+        db.ref('chat').push({ user: "🛒 ВБ", text: `${user} купил "${name}" у ${seller}` });
+        showToast("Куплено!");
     }
 
     function doTransfer() {
-        const to = document.getElementById('tr-to').value;
+        const to = document.getElementById('tr-to').value.trim();
         const s = Number(document.getElementById('tr-sum').value);
-        if (data.users[to] && data.users[user].balance >= s) {
-            db.ref('users/'+user+'/balance').set(data.users[user].balance - s);
-            db.ref('users/'+to+'/balance').set((data.users[to].balance || 0) + s);
+        if (data.users[user].balance >= s && data.users[to] && to !== user && s > 0) {
+            db.ref('users/'+user+'/balance').transaction(b => b - s);
+            db.ref('users/'+to+'/balance').transaction(b => b + s);
+            db.ref('users/'+user+'/history').push(`Перевод ${to}: -${s}`);
+            db.ref('users/'+to+'/history').push(`От ${user}: +${s}`);
             showToast("Переведено!");
-        }
+        } else showToast("Ошибка!");
     }
 
-    function claimSalary() {
-        const u = data.users[user];
-        if (Date.now() - (u.last_salary || 0) > 7*24*60*60*1000) {
-            db.ref('users/'+user).update({ balance: u.balance + Number(u.weekly_pay), last_salary: Date.now() });
-            showToast("ЗП получена!");
-        } else showToast("Еще не прошла неделя!", true);
+    function takeJob(title, pay) {
+        db.ref('users/'+user).update({ current_job: title, weekly_pay: pay });
+        showToast("Вы наняты!");
+    }
+
+    function sendPassportReq() {
+        const n = document.getElementById('p-name-input').value;
+        if (n) { db.ref('passport_requests/'+user).set({ name: n }); showToast("Заявка отправлена!"); }
+    }
+
+    function approvePass(id) {
+        db.ref('users/'+id+'/passport').set(data.passport_requests[id]);
+        db.ref('passport_requests/'+id).remove();
+        showToast("Выдан!");
+    }
+
+    function postToWB() {
+        const n = document.getElementById('wb-item-name').value;
+        const c = Number(document.getElementById('wb-item-price').value);
+        if (n && c > 0) { db.ref('market').push({ name: n, cost: c, seller: user }); showToast("Выставлено!"); }
+    }
+
+    function setJobAdmin() {
+        const t = document.getElementById('adm-t-1').value.trim();
+        const j = document.getElementById('adm-j-n').value;
+        const p = Number(document.getElementById('adm-j-p').value);
+        if (data.users[t]) { db.ref('users/'+t).update({ current_job: j, weekly_pay: p }); showToast("Готово!"); }
+    }
+
+    function fireJobAdmin() {
+        const t = document.getElementById('adm-t-2').value.trim();
+        db.ref('users/'+t).update({ current_job: "Безработный", weekly_pay: 0 }); showToast("Уволен!");
+    }
+
+    function issueFineAdmin() {
+        const t = document.getElementById('adm-t-3').value.trim();
+        const s = Number(document.getElementById('adm-fine-v').value);
+        db.ref('users/'+t+'/balance').transaction(b => b - s);
+        db.ref('users/'+t+'/history').push(`⚖️ Штраф: -${s}`);
+        showToast("Оштрафован!");
+    }
+
+    function addVacancyAdmin() {
+        const t = document.getElementById('new-v-n').value;
+        const p = Number(document.getElementById('new-v-p').value);
+        db.ref('job_vacancies').push({ title: t, pay: p }); showToast("Добавлено!");
+    }
+
+    function printMoneyAdmin() {
+        const s = Number(document.getElementById('adm-p-s').value);
+        db.ref('users/'+user+'/balance').transaction(b => (b || 0) + s);
+        db.ref('users/'+user+'/history').push(`Печать: +${s}`);
+        showToast("Напечатано!");
     }
 
     function sendMsg() {
-        const t = document.getElementById('msg-input').value;
-        if(t) { db.ref('messages').push({ u: user, t: t }); document.getElementById('msg-input').value = ""; }
+        const t = document.getElementById('chat-input').value;
+        if (t) { db.ref('chat').push({ user: user, text: t }); document.getElementById('chat-input').value = ""; }
     }
 
     function setTab(t, el) {
