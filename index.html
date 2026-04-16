@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -245,7 +246,7 @@
                 vList.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
                     <span><b>${v.title}</b><br><small>ЗП: ${v.pay}</small></span>
                     <div>
-                        <button onclick="takeJob('${v.title}', ${v.pay})" class="btn" style="width:auto; margin:0; padding:5px 10px;">Взять</button>
+                        <button onclick="takeJob('${key}', '${v.title}', ${v.pay})" class="btn" style="width:auto; margin:0; padding:5px 10px;">Взять</button>
                         ${isAdmin ? `<button onclick="db.ref('job_vacancies/${key}').remove()" class="btn btn-del">❌</button>` : ''}
                     </div>
                 </div>`;
@@ -285,7 +286,7 @@
         if (seller !== "Система") db.ref('users/'+seller+'/balance').transaction(b => (b || 0) + cost);
         db.ref('users/'+user+'/history').push(`Покупка ${name}: -${cost}`);
         if (seller !== "Система") db.ref('users/'+seller+'/history').push(`Продажа ${name} (${user}): +${cost}`);
-        db.ref('market/'+id).remove();
+        db.ref('market/'+id).remove(); // ПРОПАДАЕТ ИЗ СПИСКА
         db.ref('chat').push({ user: "🛒 ВБ", text: `${user} купил "${name}" у ${seller}` });
         showToast("Куплено!");
     }
@@ -302,14 +303,15 @@
         } else showToast("Ошибка!");
     }
 
-    function takeJob(title, pay) {
+    function takeJob(id, title, pay) {
         db.ref('users/'+user).update({ current_job: title, weekly_pay: pay });
+        db.ref('job_vacancies/'+id).remove(); // ПРОПАДАЕТ ИЗ СПИСКА
         showToast("Вы наняты!");
     }
 
     function sendPassportReq() {
         const n = document.getElementById('p-name-input').value;
-        if (n) { db.ref('passport_requests/'+user).set({ name: n }); showToast("Заявка отправлена!"); }
+        if (n) { db.ref('passport_requests/'+user).set({ name: n }); showToast("Отправлено!"); }
     }
 
     function approvePass(id) {
