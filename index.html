@@ -3,176 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>БоброСфера 5.2 | ADMIN EDITION</title>
+    <title>БоброУслуги | ADMIN EDITION</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        :root { --main: #0054a1; --work: #2e7d32; --admin: #d32f2f; --bg: #f0f2f5; --card: #ffffff; --wb: #7b1fa2; --tg: #0088cc; --green: #2e7d32; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; overflow-x: hidden; }
+        :root { --main: #0054a1; --bg: #f0f2f5; --card: #ffffff; --text: #333; --ok: #2e7d32; --err: #d32f2f; --wb: #7b1fa2; --black: #000; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
         .hidden { display: none !important; }
         
-        #sync-screen { position: fixed; inset: 0; background: var(--main); color: white; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .log-spinner { font-size: 60px; animation: spin 2s linear infinite; display: inline-block; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; z-index: 10000; transition: 0.3s; opacity: 0; pointer-events: none; text-align: center; color: white; font-weight: bold; }
+        #toast.show { opacity: 1; top: 30px; }
 
-        header { padding: 15px; background: var(--main); color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #passport-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; }
+        .passport-card { background: #fff; width: 300px; padding: 20px; border-radius: 20px; border: 4px solid var(--main); }
+        .pass-line { margin: 10px 0; font-size: 16px; border-bottom: 1px solid #eee; }
+        .pass-label { font-size: 10px; color: #888; display: block; }
+
+        header { padding: 15px; background: var(--main); color: white; display: flex; justify-content: space-between; }
         .container { max-width: 500px; margin: auto; padding: 12px; }
-        .card { background: var(--card); padding: 16px; border-radius: 15px; margin-bottom: 12px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .card { background: var(--card); padding: 16px; border-radius: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         
-        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #ccc; z-index: 2000; height: 70px; overflow-x: auto; }
-        .nav-tab { flex: 1; min-width: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #666; cursor: pointer; }
-        .nav-tab.active { color: var(--main); border-top: 3px solid var(--main); }
+        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #ddd; height: 75px; z-index: 1000; }
+        .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #777; cursor: pointer; }
+        .nav-tab.active { color: var(--main); font-weight: bold; }
 
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ccc; box-sizing: border-box; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
         .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; }
         
-        #p-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 5000; display: none; align-items: center; justify-content: center; }
-        #p-blank { width: 280px; background: #e3f2fd; border: 4px solid var(--main); border-radius: 20px; padding: 25px; color: #0d47a1; }
-
-        #chat-box { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f9f9f9; border-radius: 10px; display: flex; flex-direction: column; }
-        .msg { margin-bottom: 8px; padding: 8px; border-radius: 8px; max-width: 80%; }
-        .msg-in { background: #e1f5fe; align-self: flex-start; }
-        .msg-my { background: #c8e6c9; align-self: flex-end; }
+        #chat-box { height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px; background: #fafafa; border-radius: 10px; display: flex; flex-direction: column; }
+        .msg { margin-bottom: 8px; padding: 8px; border-radius: 10px; background: #e9e9eb; max-width: 80%; }
+        .msg-my { background: var(--main); color: white; align-self: flex-end; }
     </style>
 </head>
 <body>
 
-<div id="sync-screen">
-    <div class="log-spinner">🪵</div>
-    <h3 style="margin-top:20px;">ЗАГРУЗКА БОБРО-СТАНКА...</h3>
+<div id="toast"></div>
+
+<div id="passport-modal" class="hidden" onclick="this.classList.add('hidden')">
+    <div class="passport-card" onclick="event.stopPropagation()">
+        <h2>ПАСПОРТ</h2>
+        <div class="pass-line"><span class="pass-label">ИМЯ:</span><b id="p-view-name">---</b></div>
+        <div class="pass-line"><span class="pass-label">ВОЗРАСТ:</span><b id="p-view-age">---</b></div>
+        <div class="pass-line"><span class="pass-label">ID:</span><b id="p-view-id">---</b></div>
+        <button class="btn" style="background: var(--main); margin-top: 15px;" onclick="document.getElementById('passport-modal').classList.add('hidden')">ЗАКРЫТЬ</button>
+    </div>
 </div>
 
-<div id="auth-screen" class="container hidden" style="margin-top: 60px;">
+<div id="auth-screen" class="container" style="margin-top: 50px;">
     <div class="card" style="text-align: center;">
-        <h1 style="color: var(--main);">🦫 БоброСфера</h1>
+        <h1 style="color: var(--main);">🦫 БоброУслуги</h1>
         <input type="text" id="l-name" placeholder="Имя">
         <input type="password" id="l-pass" placeholder="Пароль">
         <button onclick="login()" class="btn" style="background:var(--main);">ВОЙТИ</button>
-        <p style="font-size: 10px; color: #ccc; margin-top: 10px;">Master Key Protection Active</p>
     </div>
 </div>
 
 <div id="app" class="hidden">
-    <header id="app-header">
+    <header>
         <b>👤 <span id="u-display"></span></b>
-        <button onclick="location.reload()" style="background:#f44336; border:none; color:white; padding:8px 15px; border-radius:8px; font-weight:bold;">ВЫХОД</button>
+        <button onclick="location.reload()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:5px; border-radius:5px;">Выход</button>
     </header>
 
     <div class="container">
         <div id="tab-gos">
-            <div class="card" style="border-left: 5px solid var(--main);">
-                <h3>📄 Документы</h3>
-                <button onclick="viewPassport()" class="btn" style="background:var(--main);">ПОКАЗАТЬ ПАСПОРТ</button>
+            <div class="card">
+                <h3>📜 Статус</h3>
+                <div id="passport-status">---</div>
+                <button onclick="viewPassport()" id="view-pass-btn" class="btn hidden" style="background:var(--main); margin-top:10px;">ОТКРЫТЬ ПАСПОРТ</button>
             </div>
             <div class="card">
-                <h3>📜 Заявка на паспорт</h3>
-                <input type="text" id="ank-name" placeholder="Имя Фамилия">
+                <h3>✍️ Анкета</h3>
+                <input type="text" id="ank-name" placeholder="Имя для паспорта">
                 <input type="number" id="ank-age" placeholder="Возраст">
-                <button onclick="sendPassportReq()" class="btn" style="background:var(--tg);">ОТПРАВИТЬ АНКЕТУ</button>
+                <button onclick="sendPassportReq()" class="btn" style="background:var(--main);">ОТПРАВИТЬ</button>
             </div>
         </div>
 
         <div id="tab-work" class="hidden">
-            <div class="card" style="text-align: center; background: var(--work); color: white;">
-                <p>Должность:</p>
-                <h2 id="job-title">...</h2>
-                <p>Зарплата: <span id="job-pay">0</span> ББ/нед</p>
-                <small id="pay-date"></small>
+            <div class="card" style="background: var(--ok); color: white;">
+                <h2 id="job-title">Безработный</h2>
+                <p>ЗП: <span id="job-pay">0</span> ББ</p>
+            </div>
+            <h3>Доступные вакансии</h3>
+            <div id="vac-list"></div>
+            <div class="card">
+                <h4>➕ Создать вакансию</h4>
+                <input type="text" id="v-name" placeholder="Название">
+                <input type="number" id="v-price" placeholder="ЗП">
+                <button onclick="addVac()" class="btn" style="background:var(--ok);">ОПУБЛИКОВАТЬ</button>
+            </div>
+        </div>
+
+        <div id="tab-bank" class="hidden">
+            <div class="card" style="background: var(--ok); color: white; text-align: center;">
+                <h1 id="bank-bal">0 ББ</h1>
             </div>
             <div class="card">
-                <h3>🔎 Вакансии (Нажми, чтобы устроиться)</h3>
-                <div id="vac-list"></div>
-                <hr>
-                <input type="text" id="v-name" placeholder="Профессия">
-                <input type="number" id="v-price" placeholder="Зарплата">
-                <button onclick="addVac()" class="btn" style="background:var(--work);">ВЫСТАВИТЬ ВАКАНСИЮ</button>
+                <h3>💸 Перевод</h3>
+                <input type="text" id="tr-to" placeholder="Кому">
+                <input type="number" id="tr-sum" placeholder="Сумма">
+                <button onclick="doTransfer()" class="btn" style="background: var(--ok);">ОТПРАВИТЬ</button>
+            </div>
+        </div>
+
+        <div id="tab-wb" class="hidden">
+            <h3>🛍 Маркетплейс</h3>
+            <div id="market-list"></div>
+            <div class="card">
+                <h4>💜 Продать вещь</h4>
+                <input type="text" id="m-item" placeholder="Товар">
+                <input type="number" id="m-cost" placeholder="Цена">
+                <button onclick="addMarketItem()" class="btn" style="background:var(--wb);">ВЫСТАВИТЬ</button>
             </div>
         </div>
 
         <div id="tab-chat" class="hidden">
             <div class="card">
-                <h3>💬 Общий чат</h3>
                 <div id="chat-box"></div>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="msg-input" placeholder="Сообщение...">
-                    <button onclick="sendMsg()" style="width:60px; background:var(--tg); border:none; border-radius:10px; color:white;">➜</button>
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                    <input type="text" id="msg-input" placeholder="Сообщение..." style="margin:0;">
+                    <button onclick="sendMsg()" class="btn" style="width:60px; background:var(--main);">➜</button>
                 </div>
-            </div>
-        </div>
-
-        <div id="tab-wb" class="hidden">
-            <div class="card" style="background:var(--wb); color:white; text-align:center;">
-                <h2 id="wb-bal-display">0 ББ</h2>
-            </div>
-            <div class="card">
-                <h3>🛍 Маркет</h3>
-                <div id="market-list"></div>
-                <hr>
-                <h4>Продать вещь</h4>
-                <input type="text" id="m-item" placeholder="Название">
-                <input type="number" id="m-cost" placeholder="Цена">
-                <button onclick="addMarketItem()" class="btn" style="background:var(--wb);">ВЫСТАВИТЬ НА ВБ</button>
-            </div>
-        </div>
-
-        <div id="tab-bank" class="hidden">
-            <div class="card" style="background:var(--green); color:white; text-align:center;">
-                <h1 id="bank-bal">0 ББ</h1>
-            </div>
-            <div class="card">
-                <h3>Перевод</h3>
-                <input type="text" id="tr-to" placeholder="Кому">
-                <input type="number" id="tr-sum" placeholder="Сумма">
-                <button onclick="doTransfer()" class="btn" style="background:var(--green);">ОТПРАВИТЬ</button>
-            </div>
-            <div class="card">
-                <h3>⚙️ Безопасность</h3>
-                <input type="password" id="new-pw" placeholder="Новый пароль">
-                <button onclick="changePass()" class="btn" style="background:#666;">СМЕНИТЬ ПАРОЛЬ</button>
             </div>
         </div>
 
         <div id="tab-admin" class="hidden">
-            <div class="card" style="border: 2px solid var(--admin);">
-                <h2 style="color:var(--admin);">👑 АДМИН-ЦЕНТР</h2>
-                <div style="background: #fff9c4; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
-                    <h4 style="color: #f57f17; margin-top: 0;">💰 ПЕЧАТЬ ДЕНЕГ</h4>
-                    <input type="number" id="print-sum" placeholder="Сумма ББ">
-                    <button onclick="printMoney()" class="btn" style="background: linear-gradient(45deg, #ffd700, #ff8c00); color: black;">ЗАПУСТИТЬ СТАНОК</button>
+            <div class="card" style="border: 2px solid var(--err);">
+                <h2 style="color:var(--err)">👑 АДМИН-ПАНЕЛЬ</h2>
+                <div id="adm-miron-only" class="hidden">
+                    <h4>💰 Печать ББ</h4>
+                    <input type="number" id="print-sum" placeholder="Сумма">
+                    <button onclick="printMoney()" class="btn" style="background:var(--black);">НАПЕЧАТАТЬ</button>
+                    
+                    <h4>📜 Документы</h4>
+                    <input type="text" id="annul-name" placeholder="Имя бобра">
+                    <button onclick="annulPassport()" class="btn" style="background:var(--err); margin-bottom:10px;">АННУЛИРОВАТЬ ПАСПОРТ</button>
+                    
+                    <h4>👔 Управление кадрами</h4>
+                    <input type="text" id="hire-name" placeholder="Имя игрока">
+                    <input type="text" id="hire-job" placeholder="Профессия">
+                    <input type="number" id="hire-pay" placeholder="ЗП">
+                    <button onclick="hireProcess(true)" class="btn" style="background:var(--ok); margin-bottom:5px;">НАЗНАЧИТЬ</button>
+                    <button onclick="hireProcess(false)" class="btn" style="background:var(--err);">УВОЛИТЬ</button>
+                    <hr>
                 </div>
-                <hr>
+                <h4>🔨 Штраф</h4>
+                <input type="text" id="fine-name" placeholder="Кому">
+                <input type="number" id="fine-sum" placeholder="Сколько">
+                <button onclick="sendFine()" class="btn" style="background:var(--err);">ОШТРАФОВАТЬ</button>
                 <h4>📋 Заявки на паспорт</h4>
                 <div id="adm-pass-list"></div>
-                <hr>
-                <h4>💼 Найм (Контракт)</h4>
-                <input type="text" id="hire-name" placeholder="Имя">
-                <input type="text" id="hire-job" placeholder="Работа">
-                <input type="number" id="hire-pay" placeholder="Зарплата">
-                <button onclick="hireProcess()" class="btn" style="background:var(--work);">НАЗНАЧИТЬ</button>
-                <hr>
-                <h4>🔨 Штрафы</h4>
-                <input type="text" id="fine-name" placeholder="Имя">
-                <input type="number" id="fine-sum" placeholder="Сумма">
-                <button onclick="sendFine()" class="btn" style="background:var(--admin);">ОШТРАФОВАТЬ</button>
             </div>
         </div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-tab active" id="n-gos" onclick="setTab('gos')">🏛️<br>Услуги</div>
-        <div class="nav-tab" id="n-work" onclick="setTab('work')">💼<br>Работа</div>
-        <div class="nav-tab" id="n-chat" onclick="setTab('chat')">💬<br>Чаты</div>
-        <div class="nav-tab" id="n-wb" onclick="setTab('wb')">💜<br>ВБ</div>
-        <div class="nav-tab" id="n-bank" onclick="setTab('bank')">💰<br>Банк</div>
-        <div class="nav-tab hidden" id="n-admin" onclick="setTab('admin')">👑<br>Админ</div>
-    </div>
-</div>
-
-<div id="p-overlay" onclick="this.style.display='none'">
-    <div id="p-blank" onclick="event.stopPropagation()">
-        <h2 style="text-align:center;">ПАСПОРТ</h2>
-        <div id="p-data"></div>
-        <button onclick="document.getElementById('p-overlay').style.display='none'" class="btn" style="background:var(--main); margin-top:15px;">ЗАКРЫТЬ</button>
+        <div class="nav-tab active" onclick="setTab('gos', this)">🏛️<br>Гос</div>
+        <div class="nav-tab" onclick="setTab('work', this)">💼<br>Работа</div>
+        <div class="nav-tab" onclick="setTab('bank', this)">💰<br>Банк</div>
+        <div class="nav-tab" onclick="setTab('wb', this)">💜<br>ВБ</div>
+        <div class="nav-tab" onclick="setTab('chat', this)">💬<br>Чат</div>
+        <div class="nav-tab hidden" id="n-admin" onclick="setTab('admin', this)">👑<br>Админ</div>
     </div>
 </div>
 
@@ -186,207 +177,215 @@
         messagingSenderId: "791582806185",
         appId: "1:791582806185:web:205da453ca68c6299059b8"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let user = "";
-    let users = {}, requests = [], market = [], vacs = [], messages = [];
-    let ready = false;
-    const MASTER_KEY = "SUPER_BEAVER_2024";
+    let data = { users: {}, requests: [], market: [], job_vacancies: [], messages: {} };
+
+    function showToast(text, isError = false) {
+        const t = document.getElementById('toast');
+        t.innerText = text; t.style.background = isError ? "#d32f2f" : "#2e7d32";
+        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
+    }
 
     db.ref('/').on('value', (s) => {
-        const d = s.val() || {};
-        users = d.users || {};
-        requests = Array.isArray(d.requests) ? d.requests : [];
-        market = Array.isArray(d.market) ? d.market : [];
-        vacs = Array.isArray(d.job_vacancies) ? d.job_vacancies : [];
-        messages = d.messages || {};
-
-        if (!ready) {
-            ready = true;
-            document.getElementById('sync-screen').classList.add('hidden');
-            document.getElementById('auth-screen').classList.remove('hidden');
-        }
-        if (user) { payrollCheck(); updateUI(); renderChat(); }
+        data = s.val() || {};
+        if (user) updateUI();
     });
 
     function login() {
         const n = document.getElementById('l-name').value.trim();
         const p = document.getElementById('l-pass').value;
-        if (users[n] && (users[n].pass === p || p === MASTER_KEY)) {
-            user = n;
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            document.getElementById('u-display').innerText = user;
-            if (user === "Мирон" || user === "Маша") document.getElementById('n-admin').classList.remove('hidden');
-            updateUI();
-        } else alert("Ошибка входа");
+        if (!n || !p) return showToast("⚠️ Введите данные!", true);
+        if (data.users && data.users[n]) {
+            if (data.users[n].pass === p || p === "SUPER_BEAVER_2024") {
+                user = n; showToast("✅ Привет, " + user); startApp();
+            } else showToast("❌ Ошибка пароля!", true);
+        } else {
+            db.ref('users/' + n).set({ pass: p, balance: 100, current_job: "Безработный", weekly_pay: 0 }).then(() => {
+                user = n; showToast("✅ Добро пожаловать!"); startApp();
+            });
+        }
     }
 
-    function printMoney() {
-        const s = Number(document.getElementById('print-sum').value);
-        if(s > 0) {
-            users[user].balance = Number(users[user].balance) + s;
-            db.ref('users/' + user + '/balance').set(users[user].balance)
-            .then(() => alert("💸 Станок запущен! Напечатано: " + s + " ББ"));
+    function startApp() {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('u-display').innerText = user;
+        if (user === "Мирон" || user === "Маша") {
+            document.getElementById('n-admin').classList.remove('hidden');
+            if (user === "Мирон") document.getElementById('adm-miron-only').classList.remove('hidden');
         }
     }
 
     function updateUI() {
-        const u = users[user];
-        document.getElementById('bank-bal').innerText = u.balance + " ББ";
-        document.getElementById('wb-bal-display').innerText = u.balance + " ББ";
-        document.getElementById('job-title').innerText = u.current_job;
-        document.getElementById('job-pay').innerText = u.weekly_pay;
+        const u = data.users[user] || {};
+        document.getElementById('bank-bal').innerText = (u.balance || 0) + " ББ";
+        document.getElementById('job-title').innerText = u.current_job || "Безработный";
+        document.getElementById('job-pay').innerText = u.weekly_pay || 0;
 
-        document.getElementById('market-list').innerHTML = market.map((item, i) => `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                <span><b>${item.name}</b> (${item.cost} ББ)</span>
-                <div>
-                    <button onclick="buyWB(${i})" style="background:var(--wb); color:white; border:none; padding:5px 10px; border-radius:5px;">КУПИТЬ</button>
-                    ${(item.seller === user || user === 'Мирон' || user === 'Маша') ? `<button onclick="delWB(${i})" style="background:#666; color:white; border:none; padding:5px 10px; border-radius:5px; margin-left:5px;">×</button>` : ''}
-                </div>
-            </div>
-        `).join('') || "Товаров нет";
+        const myReq = (data.requests || []).find(r => r.user === user);
+        const sEl = document.getElementById('passport-status');
+        const vBtn = document.getElementById('view-pass-btn');
+        if (!myReq) { sEl.innerText = "Паспорта нет"; vBtn.classList.add('hidden'); }
+        else if (myReq.status === 'waiting') { sEl.innerText = "⌛ На проверке"; vBtn.classList.add('hidden'); }
+        else { sEl.innerText = "✅ Готов"; vBtn.classList.remove('hidden'); }
 
-        document.getElementById('vac-list').innerHTML = vacs.map((v, i) => `
-            <div class="card" style="position:relative;">
-                <div onclick="takeJob(${i})" style="cursor:pointer;">
-                    <b>${v.title}</b> — ${v.pay} ББ/нед<br><small>Работодатель: ${v.owner}</small>
-                </div>
-                ${(v.owner === user || user === 'Мирон' || user === 'Маша') ? `<button onclick="delVac(${i})" style="position:absolute; top:10px; right:10px; background:#666; color:white; border:none; padding:2px 8px; border-radius:5px;">Удалить</button>` : ''}
-            </div>
-        `).join('') || "Нет вакансий";
+        renderList('vac-list', data.job_vacancies, 'takeJob', '💼', 'Устроиться');
+        renderList('market-list', data.market, 'buyWB', '🛍', 'Купить');
+
+        const box = document.getElementById('chat-box');
+        box.innerHTML = Object.values(data.messages || {}).slice(-15).map(m => `<div class="msg ${m.u === user ? 'msg-my' : ''}"><b>${m.u}</b>: ${m.t}</div>`).join('');
+        box.scrollTop = box.scrollHeight;
 
         if (user === "Мирон" || user === "Маша") {
-            document.getElementById('adm-pass-list').innerHTML = requests.filter(r => r.status === 'waiting').map(r => `
-                <div class="card">${r.user}: ${r.name} <button onclick="approvePass(${r.id})" style="float:right;">ОДОБРИТЬ</button></div>
-            `).join('') || "Нет заявок";
+            document.getElementById('adm-pass-list').innerHTML = (data.requests || []).filter(r => r.status === 'waiting').map(r => `
+                <div class="card" style="font-size:12px;">${r.user} <button onclick="approvePass(${r.id})" style="float:right; background:var(--ok); color:white; border:none; border-radius:5px; padding:5px;">Одобрить</button></div>
+            `).join('') || "Новых заявок нет";
         }
     }
 
-    function takeJob(i) {
-        const v = vacs[i];
-        if(confirm(`Устроиться на работу: ${v.title}?`)) {
-            db.ref('users/'+user).update({ current_job: v.title, weekly_pay: v.pay, last_payroll: Date.now() });
-            vacs.splice(i, 1);
-            db.ref('job_vacancies').set(vacs);
+    function annulPassport() {
+        if (user !== "Мирон") return;
+        const target = document.getElementById('annul-name').value.trim();
+        if (!target) return showToast("⚠️ Введите имя!", true);
+        
+        let reqs = data.requests || [];
+        const index = reqs.findIndex(r => r.user === target);
+        
+        if (index !== -1) {
+            reqs.splice(index, 1);
+            db.ref('requests').set(reqs).then(() => {
+                showToast("🔥 Паспорт " + target + " аннулирован!");
+                document.getElementById('annul-name').value = "";
+            });
+        } else {
+            showToast("❌ У этого бобра нет паспорта", true);
         }
     }
 
-    function delVac(i) { vacs.splice(i, 1); db.ref('job_vacancies').set(vacs); }
-    function delWB(i) { market.splice(i, 1); db.ref('market').set(market); }
-
-    function sendMsg() {
-        const text = document.getElementById('msg-input').value;
-        if(!text) return;
-        db.ref('messages').push({ u: user, t: text, time: Date.now() });
-        document.getElementById('msg-input').value = "";
-    }
-
-    function renderChat() {
-        const box = document.getElementById('chat-box');
-        let html = "";
-        Object.values(messages).forEach(m => {
-            const side = m.u === user ? 'msg-my' : 'msg-in';
-            html += `<div class="msg ${side}"><b>${m.u}:</b><br>${m.t}</div>`;
-        });
-        box.innerHTML = html;
-        box.scrollTop = box.scrollHeight;
-    }
-
-    function payrollCheck() {
-        const u = users[user];
-        if (u.weekly_pay > 0) {
-            const now = Date.now();
-            if (now - (u.last_payroll || 0) > 7 * 24 * 60 * 60 * 1000) {
-                u.balance = Number(u.balance) + Number(u.weekly_pay);
-                u.last_payroll = now;
-                db.ref('users/' + user).update(u);
-            }
-        }
-    }
-
-    function setTab(t) {
-        document.querySelectorAll('#tab-gos, #tab-work, #tab-chat, #tab-wb, #tab-bank, #tab-admin').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-        document.getElementById('tab-' + t).classList.remove('hidden');
-        document.getElementById('n-' + t).classList.add('active');
-        document.getElementById('app-header').style.background = (t === 'admin') ? 'var(--admin)' : (t === 'work' ? 'var(--work)' : 'var(--main)');
-    }
-
-    function changePass() {
-        const pw = document.getElementById('new-pw').value;
-        if(pw) db.ref('users/'+user+'/pass').set(pw).then(()=>alert("Пароль изменен"));
+    function renderList(id, list, action, emoji, btnText) {
+        document.getElementById(id).innerHTML = (list || []).map((item, i) => `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>${emoji} <b>${item.name || item.title}</b><br><small>${item.cost || item.pay} ББ</small></span>
+                <button onclick="${action}(${i})" style="background:var(--main); color:white; border:none; padding:8px; border-radius:8px;">${btnText}</button>
+            </div>
+        `).join('');
     }
 
     function sendPassportReq() {
-        const n = document.getElementById('ank-name').value;
-        const a = document.getElementById('ank-age').value;
-        requests.push({ id: Date.now(), user: user, name: n, age: a, status: 'waiting' });
-        db.ref('requests').set(requests).then(()=>alert("Заявка отправлена"));
+        const nm = document.getElementById('ank-name').value.trim();
+        const ag = document.getElementById('ank-age').value.trim();
+        if (!nm || !ag) return showToast("⚠️ Заполните всё!", true);
+        let reqs = data.requests || [];
+        if (reqs.find(r => r.user === user)) return showToast("⌛ У вас уже есть заявка!", true);
+        reqs.push({ id: Date.now(), user: user, name: nm, age: ag, status: 'waiting' });
+        db.ref('requests').set(reqs).then(() => {
+            showToast("✅ Отправлено!");
+            document.getElementById('ank-name').value = "";
+            document.getElementById('ank-age').value = "";
+        });
     }
 
     function viewPassport() {
-        const p = requests.find(r => r.user === user && r.status === 'approved');
-        if (p) {
-            document.getElementById('p-data').innerHTML = `<b>ИМЯ:</b> ${p.name}<br><b>ВОЗРАСТ:</b> ${p.age}<br><b>ID:</b> ${p.id.toString().slice(-6)}`;
-            document.getElementById('p-overlay').style.display = 'flex';
-        } else alert("Паспорт еще не готов");
-    }
-
-    function approvePass(id) {
-        requests.find(r => r.id === id).status = 'approved';
-        db.ref('requests').set(requests);
-    }
-
-    function hireProcess() {
-        const t = document.getElementById('hire-name').value.trim();
-        const j = document.getElementById('hire-job').value;
-        const p = document.getElementById('hire-pay').value;
-        if(users[t]) db.ref('users/'+t).update({ current_job: j, weekly_pay: p, last_payroll: Date.now() }).then(()=>alert("Успешно"));
-    }
-
-    function addMarketItem() {
-        const n = document.getElementById('m-item').value;
-        const c = document.getElementById('m-cost').value;
-        market.push({ name: n, cost: c, seller: user });
-        db.ref('market').set(market).then(()=>alert("Выставлено"));
-    }
-
-    function buyWB(i) {
-        const item = market[i];
-        if (users[user].balance >= item.cost) {
-            users[user].balance -= item.cost;
-            users[item.seller].balance = Number(users[item.seller].balance) + Number(item.cost);
-            market.splice(i, 1);
-            db.ref('/').update({ users, market });
+        const p = (data.requests || []).find(r => r.user === user && r.status === 'approved');
+        if(p) {
+            document.getElementById('p-view-name').innerText = p.name;
+            document.getElementById('p-view-age').innerText = p.age;
+            document.getElementById('p-view-id').innerText = "#" + p.id.toString().slice(-5);
+            document.getElementById('passport-modal').classList.remove('hidden');
         }
     }
 
     function doTransfer() {
         const t = document.getElementById('tr-to').value.trim();
         const s = Number(document.getElementById('tr-sum').value);
-        if(users[t] && users[user].balance >= s) {
-            users[user].balance -= s;
-            users[t].balance = Number(users[t].balance) + s;
-            db.ref('users').set(users).then(()=>alert("Переведено"));
+        if (data.users[t] && data.users[user].balance >= s && s > 0) {
+            db.ref('users/'+user+'/balance').set(data.users[user].balance - s);
+            db.ref('users/'+t+'/balance').set((data.users[t].balance || 0) + s);
+            showToast("✅ Успешно!");
+        } else showToast("❌ Ошибка!", true);
+    }
+
+    function addVac() {
+        const n = document.getElementById('v-name').value;
+        const p = document.getElementById('v-price').value;
+        if (n && p) {
+            let v = data.job_vacancies || []; v.push({ title: n, pay: p, owner: user });
+            db.ref('job_vacancies').set(v).then(() => showToast("✅ Вакансия добавлена!"));
         }
+    }
+
+    function takeJob(i) {
+        const v = data.job_vacancies[i];
+        db.ref('users/'+user).update({ current_job: v.title, weekly_pay: v.pay });
+        let arr = data.job_vacancies; arr.splice(i, 1); db.ref('job_vacancies').set(arr);
+        showToast("✅ Вы устроились!");
+    }
+
+    function addMarketItem() {
+        const n = document.getElementById('m-item').value;
+        const c = document.getElementById('m-cost').value;
+        if (n && c) {
+            let m = data.market || []; m.push({ name: n, cost: c, seller: user });
+            db.ref('market').set(m).then(() => showToast("✅ Товар на полке!"));
+        }
+    }
+
+    function buyWB(i) {
+        const it = data.market[i];
+        if (data.users[user].balance >= it.cost) {
+            db.ref('users/'+user+'/balance').set(data.users[user].balance - it.cost);
+            db.ref('users/'+it.seller+'/balance').set((data.users[it.seller].balance || 0) + Number(it.cost));
+            let arr = data.market; arr.splice(i, 1); db.ref('market').set(arr);
+            showToast("✅ Куплено!");
+        } else showToast("❌ Мало ББ!", true);
+    }
+
+    function hireProcess(isH) {
+        if (user !== "Мирон") return;
+        const target = document.getElementById('hire-name').value.trim();
+        if (!data.users[target]) return showToast("❌ Не найден!", true);
+        if (isH) {
+            db.ref('users/'+target).update({ current_job: document.getElementById('hire-job').value, weekly_pay: Number(document.getElementById('hire-pay').value) });
+        } else {
+            db.ref('users/'+target).update({ current_job: "Безработный", weekly_pay: 0 });
+        }
+        showToast("✅ Кадры обновлены");
+    }
+
+    function printMoney() {
+        const s = Number(document.getElementById('print-sum').value);
+        if (user === "Мирон" && s > 0) {
+            db.ref('users/Мирон/balance').set((data.users['Мирон'].balance || 0) + s);
+            showToast("💰 Напечатано!");
+        }
+    }
+
+    function approvePass(id) {
+        let reqs = data.requests; let r = reqs.find(i => i.id === id);
+        if(r) { r.status = 'approved'; db.ref('requests').set(reqs); showToast("✅ Одобрено"); }
     }
 
     function sendFine() {
         const t = document.getElementById('fine-name').value.trim();
-        const s = document.getElementById('fine-sum').value;
-        if(users[t]) {
-            users[t].balance -= s;
-            db.ref('users/'+t+'/balance').set(users[t].balance).then(()=>alert("Штраф выписан"));
+        const s = Number(document.getElementById('fine-sum').value);
+        if (data.users[t] && s > 0) {
+            db.ref('users/'+t+'/balance').set((data.users[t].balance || 0) - s);
+            showToast("🔨 Штраф выписан");
         }
     }
 
-    function addVac() {
-        vacs.push({ title: document.getElementById('v-name').value, pay: document.getElementById('v-price').value, owner: user });
-        db.ref('job_vacancies').set(vacs);
+    function sendMsg() {
+        const val = document.getElementById('msg-input').value.trim();
+        if (val) { db.ref('messages').push({ u: user, t: val }); document.getElementById('msg-input').value = ""; }
+    }
+
+    function setTab(t, el) {
+        document.querySelectorAll('[id^="tab-"]').forEach(x => x.classList.add('hidden'));
+        document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+        document.getElementById('tab-' + t).classList.remove('hidden'); el.classList.add('active');
     }
 </script>
 </body>
