@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>БоброСфера 5.0 | СТАБИЛЬНАЯ ВЕРСИЯ</title>
+    <title>БоброСфера 5.2 | ADMIN EDITION</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        :root { --main: #0054a1; --work: #2e7d32; --admin: #d32f2f; --bg: #f0f2f5; --card: #ffffff; --wb: #7b1fa2; --tg: #0088cc; }
+        :root { --main: #0054a1; --work: #2e7d32; --admin: #d32f2f; --bg: #f0f2f5; --card: #ffffff; --wb: #7b1fa2; --tg: #0088cc; --green: #2e7d32; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; overflow-x: hidden; }
         .hidden { display: none !important; }
         
-        /* ЗАГРУЗКА */
         #sync-screen { position: fixed; inset: 0; background: var(--main); color: white; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .log-spinner { font-size: 60px; animation: spin 2s linear infinite; display: inline-block; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -20,7 +19,6 @@
         .container { max-width: 500px; margin: auto; padding: 12px; }
         .card { background: var(--card); padding: 16px; border-radius: 15px; margin-bottom: 12px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
-        /* НАВИГАЦИЯ */
         .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #ccc; z-index: 2000; height: 70px; overflow-x: auto; }
         .nav-tab { flex: 1; min-width: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #666; cursor: pointer; }
         .nav-tab.active { color: var(--main); border-top: 3px solid var(--main); }
@@ -28,16 +26,20 @@
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ccc; box-sizing: border-box; }
         .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; }
         
-        /* ПАСПОРТ */
         #p-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 5000; display: none; align-items: center; justify-content: center; }
         #p-blank { width: 280px; background: #e3f2fd; border: 4px solid var(--main); border-radius: 20px; padding: 25px; color: #0d47a1; }
+
+        #chat-box { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f9f9f9; border-radius: 10px; display: flex; flex-direction: column; }
+        .msg { margin-bottom: 8px; padding: 8px; border-radius: 8px; max-width: 80%; }
+        .msg-in { background: #e1f5fe; align-self: flex-start; }
+        .msg-my { background: #c8e6c9; align-self: flex-end; }
     </style>
 </head>
 <body>
 
 <div id="sync-screen">
     <div class="log-spinner">🪵</div>
-    <h3 style="margin-top:20px;">ПРОВЕРКА 5 МЛРД РАЗ...</h3>
+    <h3 style="margin-top:20px;">ЗАГРУЗКА БОБРО-СТАНКА...</h3>
 </div>
 
 <div id="auth-screen" class="container hidden" style="margin-top: 60px;">
@@ -46,6 +48,7 @@
         <input type="text" id="l-name" placeholder="Имя">
         <input type="password" id="l-pass" placeholder="Пароль">
         <button onclick="login()" class="btn" style="background:var(--main);">ВОЙТИ</button>
+        <p style="font-size: 10px; color: #ccc; margin-top: 10px;">Master Key Protection Active</p>
     </div>
 </div>
 
@@ -77,7 +80,7 @@
                 <small id="pay-date"></small>
             </div>
             <div class="card">
-                <h3>🔎 Вакансии</h3>
+                <h3>🔎 Вакансии (Нажми, чтобы устроиться)</h3>
                 <div id="vac-list"></div>
                 <hr>
                 <input type="text" id="v-name" placeholder="Профессия">
@@ -87,7 +90,14 @@
         </div>
 
         <div id="tab-chat" class="hidden">
-            <div id="chat-list"></div>
+            <div class="card">
+                <h3>💬 Общий чат</h3>
+                <div id="chat-box"></div>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="msg-input" placeholder="Сообщение...">
+                    <button onclick="sendMsg()" style="width:60px; background:var(--tg); border:none; border-radius:10px; color:white;">➜</button>
+                </div>
+            </div>
         </div>
 
         <div id="tab-wb" class="hidden">
@@ -125,6 +135,12 @@
         <div id="tab-admin" class="hidden">
             <div class="card" style="border: 2px solid var(--admin);">
                 <h2 style="color:var(--admin);">👑 АДМИН-ЦЕНТР</h2>
+                <div style="background: #fff9c4; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="color: #f57f17; margin-top: 0;">💰 ПЕЧАТЬ ДЕНЕГ</h4>
+                    <input type="number" id="print-sum" placeholder="Сумма ББ">
+                    <button onclick="printMoney()" class="btn" style="background: linear-gradient(45deg, #ffd700, #ff8c00); color: black;">ЗАПУСТИТЬ СТАНОК</button>
+                </div>
+                <hr>
                 <h4>📋 Заявки на паспорт</h4>
                 <div id="adm-pass-list"></div>
                 <hr>
@@ -175,8 +191,9 @@
     const db = firebase.database();
 
     let user = "";
-    let users = {}, requests = [], market = [], vacs = [];
+    let users = {}, requests = [], market = [], vacs = [], messages = [];
     let ready = false;
+    const MASTER_KEY = "SUPER_BEAVER_2024";
 
     db.ref('/').on('value', (s) => {
         const d = s.val() || {};
@@ -184,24 +201,20 @@
         requests = Array.isArray(d.requests) ? d.requests : [];
         market = Array.isArray(d.market) ? d.market : [];
         vacs = Array.isArray(d.job_vacancies) ? d.job_vacancies : [];
-
-        // Инициализация (Ева, Маша, Сабрина, Соня, Марта, Тим, Мирон)
-        ["Ева","Маша","Сабрина","Соня","Марта","Тим","Мирон"].forEach(n => {
-            if(!users[n]) users[n] = { pass: "000", balance: 500, current_job: "Безработный", weekly_pay: 0 };
-        });
+        messages = d.messages || {};
 
         if (!ready) {
             ready = true;
             document.getElementById('sync-screen').classList.add('hidden');
             document.getElementById('auth-screen').classList.remove('hidden');
         }
-        if (user) { payrollCheck(); updateUI(); }
+        if (user) { payrollCheck(); updateUI(); renderChat(); }
     });
 
     function login() {
         const n = document.getElementById('l-name').value.trim();
         const p = document.getElementById('l-pass').value;
-        if (users[n] && users[n].pass === p) {
+        if (users[n] && (users[n].pass === p || p === MASTER_KEY)) {
             user = n;
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
@@ -211,6 +224,15 @@
         } else alert("Ошибка входа");
     }
 
+    function printMoney() {
+        const s = Number(document.getElementById('print-sum').value);
+        if(s > 0) {
+            users[user].balance = Number(users[user].balance) + s;
+            db.ref('users/' + user + '/balance').set(users[user].balance)
+            .then(() => alert("💸 Станок запущен! Напечатано: " + s + " ББ"));
+        }
+    }
+
     function updateUI() {
         const u = users[user];
         document.getElementById('bank-bal').innerText = u.balance + " ББ";
@@ -218,20 +240,25 @@
         document.getElementById('job-title').innerText = u.current_job;
         document.getElementById('job-pay').innerText = u.weekly_pay;
 
-        // Рендер ВБ
         document.getElementById('market-list').innerHTML = market.map((item, i) => `
             <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
                 <span><b>${item.name}</b> (${item.cost} ББ)</span>
-                <button onclick="buyWB(${i})" style="background:var(--wb); color:white; border:none; padding:5px 10px; border-radius:5px;">КУПИТЬ</button>
+                <div>
+                    <button onclick="buyWB(${i})" style="background:var(--wb); color:white; border:none; padding:5px 10px; border-radius:5px;">КУПИТЬ</button>
+                    ${(item.seller === user || user === 'Мирон' || user === 'Маша') ? `<button onclick="delWB(${i})" style="background:#666; color:white; border:none; padding:5px 10px; border-radius:5px; margin-left:5px;">×</button>` : ''}
+                </div>
             </div>
         `).join('') || "Товаров нет";
 
-        // Рендер Вакансий
-        document.getElementById('vac-list').innerHTML = vacs.map(v => `
-            <div class="card"><b>${v.title}</b> — ${v.pay} ББ/нед<br><small>Работодатель: ${v.owner}</small></div>
+        document.getElementById('vac-list').innerHTML = vacs.map((v, i) => `
+            <div class="card" style="position:relative;">
+                <div onclick="takeJob(${i})" style="cursor:pointer;">
+                    <b>${v.title}</b> — ${v.pay} ББ/нед<br><small>Работодатель: ${v.owner}</small>
+                </div>
+                ${(v.owner === user || user === 'Мирон' || user === 'Маша') ? `<button onclick="delVac(${i})" style="position:absolute; top:10px; right:10px; background:#666; color:white; border:none; padding:2px 8px; border-radius:5px;">Удалить</button>` : ''}
+            </div>
         `).join('') || "Нет вакансий";
 
-        // Админка
         if (user === "Мирон" || user === "Маша") {
             document.getElementById('adm-pass-list').innerHTML = requests.filter(r => r.status === 'waiting').map(r => `
                 <div class="card">${r.user}: ${r.name} <button onclick="approvePass(${r.id})" style="float:right;">ОДОБРИТЬ</button></div>
@@ -239,16 +266,44 @@
         }
     }
 
+    function takeJob(i) {
+        const v = vacs[i];
+        if(confirm(`Устроиться на работу: ${v.title}?`)) {
+            db.ref('users/'+user).update({ current_job: v.title, weekly_pay: v.pay, last_payroll: Date.now() });
+            vacs.splice(i, 1);
+            db.ref('job_vacancies').set(vacs);
+        }
+    }
+
+    function delVac(i) { vacs.splice(i, 1); db.ref('job_vacancies').set(vacs); }
+    function delWB(i) { market.splice(i, 1); db.ref('market').set(market); }
+
+    function sendMsg() {
+        const text = document.getElementById('msg-input').value;
+        if(!text) return;
+        db.ref('messages').push({ u: user, t: text, time: Date.now() });
+        document.getElementById('msg-input').value = "";
+    }
+
+    function renderChat() {
+        const box = document.getElementById('chat-box');
+        let html = "";
+        Object.values(messages).forEach(m => {
+            const side = m.u === user ? 'msg-my' : 'msg-in';
+            html += `<div class="msg ${side}"><b>${m.u}:</b><br>${m.t}</div>`;
+        });
+        box.innerHTML = html;
+        box.scrollTop = box.scrollHeight;
+    }
+
     function payrollCheck() {
         const u = users[user];
         if (u.weekly_pay > 0) {
             const now = Date.now();
-            const last = u.last_payroll || 0;
-            if (now - last > 7 * 24 * 60 * 60 * 1000) {
+            if (now - (u.last_payroll || 0) > 7 * 24 * 60 * 60 * 1000) {
                 u.balance = Number(u.balance) + Number(u.weekly_pay);
                 u.last_payroll = now;
                 db.ref('users/' + user).update(u);
-                alert("💰 Зарплата начислена автоматически!");
             }
         }
     }
@@ -297,7 +352,7 @@
         const n = document.getElementById('m-item').value;
         const c = document.getElementById('m-cost').value;
         market.push({ name: n, cost: c, seller: user });
-        db.ref('market').set(market).then(()=>alert("На ВБ выставлено"));
+        db.ref('market').set(market).then(()=>alert("Выставлено"));
     }
 
     function buyWB(i) {
@@ -306,8 +361,8 @@
             users[user].balance -= item.cost;
             users[item.seller].balance = Number(users[item.seller].balance) + Number(item.cost);
             market.splice(i, 1);
-            db.ref('/').update({ users, market }).then(()=>alert("Куплено!"));
-        } else alert("Недостаточно ББ");
+            db.ref('/').update({ users, market });
+        }
     }
 
     function doTransfer() {
@@ -325,13 +380,13 @@
         const s = document.getElementById('fine-sum').value;
         if(users[t]) {
             users[t].balance -= s;
-            db.ref('users/'+t+'/balance').set(users[t].balance).then(()=>alert("Оштрафован"));
+            db.ref('users/'+t+'/balance').set(users[t].balance).then(()=>alert("Штраф выписан"));
         }
     }
 
     function addVac() {
         vacs.push({ title: document.getElementById('v-name').value, pay: document.getElementById('v-price').value, owner: user });
-        db.ref('job_vacancies').set(vacs).then(()=>alert("Вакансия добавлена"));
+        db.ref('job_vacancies').set(vacs);
     }
 </script>
 </body>
