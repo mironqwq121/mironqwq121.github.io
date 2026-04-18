@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бобро-Услуги 3.8 — ПРЕЗИДЕНТСКАЯ ВЕРСИЯ</title>
+    <title>Бобро-Услуги 4.0 — ФИНАЛ</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -14,21 +14,17 @@
         .card { background: var(--card); padding: 18px; border-radius: 16px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         header { padding: 15px 20px; background: var(--main); color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; background: var(--main); color: white; margin-top: 5px; transition: 0.2s; font-size: 14px; }
-        .btn:active { transform: scale(0.97); }
         .btn-success { background: var(--success); }
         .btn-danger { background: var(--danger); }
         .btn-gold { background: var(--gold); color: black; }
         .btn-outline { background: none; border: 1px solid var(--border); color: var(--text); font-size: 12px; padding: 8px; margin-top: 10px; }
-        input, textarea { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1.5px solid var(--border); box-sizing: border-box; font-size: 16px; outline: none; font-family: inherit; }
-        
+        input, textarea { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1.5px solid var(--border); box-sizing: border-box; font-size: 16px; outline: none; }
         #chat-box { height: 250px; overflow-y: auto; background: #fff; border-radius: 12px; padding: 15px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
         .msg { padding: 8px 12px; border-radius: 12px; background: #f0f2f5; align-self: flex-start; max-width: 80%; font-size: 14px; }
         .msg.my { background: var(--main); color: white; align-self: flex-end; }
-
         .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid var(--border); height: 75px; z-index: 1000; }
-        .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #8e8e93; cursor: pointer; text-align: center; }
+        .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #8e8e93; cursor: pointer; }
         .nav-tab.active { color: var(--main); font-weight: bold; }
-        .nav-tab span { font-size: 18px; margin-bottom: 2px; }
         .del-x { float:right; background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold; }
     </style>
 </head>
@@ -39,7 +35,7 @@
         <h1 style="color: var(--main);">🦫 Бобро-Услуги</h1>
         <input type="text" id="l-name" placeholder="Никнейм">
         <input type="password" id="l-pass" placeholder="Пароль">
-        <button onclick="login()" class="btn">Войти / Регистрация</button>
+        <button onclick="login()" class="btn" id="login-btn">Войти / Регистрация</button>
     </div>
 </div>
 
@@ -53,14 +49,11 @@
         <div id="tab-gos">
             <div id="fine-display"></div>
             <div id="passport-display"></div>
-            <div class="card">
-                <h3>📢 Новости</h3>
-                <div id="news-feed">Загрузка...</div>
-            </div>
+            <div class="card"><h3>📢 Новости</h3><div id="news-feed">Загрузка...</div></div>
             <div class="card">
                 <h3>📜 Заявка на паспорт</h3>
                 <input type="text" id="p-name-input" placeholder="Имя Фамилия">
-                <button onclick="sendPassportReq()" class="btn">Подать</button>
+                <button onclick="sendPassportReq()" class="btn">Отправить</button>
             </div>
         </div>
 
@@ -72,18 +65,17 @@
         <div id="tab-chat" class="hidden">
             <div id="chat-box"></div>
             <div style="display:flex; gap:8px; margin-top:10px;">
-                <input type="text" id="chat-input" placeholder="Сообщение..." style="margin:0;">
+                <input type="text" id="chat-input" placeholder="Сообщение...">
                 <button onclick="sendMsg()" class="btn" style="width:70px; margin:0;">▲</button>
             </div>
         </div>
 
         <div id="tab-work" class="hidden">
             <div class="card" style="background:var(--success); color: white;">
-                <h2 id="job-title">Гражданин</h2>
+                <h2 id="job-title">Загрузка...</h2>
                 <p>Зарплата: <b id="job-pay">0</b> ББ</p>
                 <button onclick="changePassword()" class="btn btn-outline" style="color: white; border-color: white;">⚙️ Сменить пароль</button>
             </div>
-            <h3>💼 Центр занятости</h3>
             <div id="vac-list"></div>
         </div>
 
@@ -102,56 +94,39 @@
         <div id="tab-wb" class="hidden">
             <div class="card" style="background:var(--wb); color:white;"><h2>🛍️ WildBobr</h2></div>
             <div class="card">
-                <input type="text" id="wb-n" placeholder="Товар">
-                <input type="number" id="wb-p" placeholder="Цена">
-                <button onclick="postToWB()" class="btn" style="background:var(--wb)">Продать</button>
+                <b>📦 Выставить на продажу</b>
+                <input type="text" id="wb-n" placeholder="Название товара">
+                <input type="number" id="wb-p" placeholder="Цена в ББ">
+                <button onclick="postToWB()" class="btn" style="background:var(--wb)">Опубликовать</button>
             </div>
             <div id="market-list"></div>
         </div>
 
         <div id="tab-admin" class="hidden">
-            <div class="card" style="border: 2px solid var(--gold); background: #1a1a1a; color: white;">
-                <h2 style="color:var(--gold); margin:0;">👑 Управление Страной</h2>
-            </div>
-            
+            <div class="card" style="border: 2px solid var(--gold); background: #1a1a1a; color: white;"><h2>👑 Админка</h2></div>
             <div class="card">
-                <b>⚖️ Редактор Законов</b>
-                <input type="text" id="adm-uk-st" placeholder="Статья (напр. 1.1)">
-                <textarea id="adm-uk-text" placeholder="Описание и штраф..."></textarea>
-                <button onclick="addUKAdmin()" class="btn btn-gold">Сохранить закон</button>
+                <b>⚖️ Законы</b>
+                <input type="text" id="adm-uk-st" placeholder="Статья (1.1)">
+                <textarea id="adm-uk-text" placeholder="Текст..."></textarea>
+                <button onclick="addUKAdmin()" class="btn btn-gold">Добавить закон</button>
             </div>
-
             <div class="card">
-                <b>📢 Государственные новости</b>
-                <input type="text" id="adm-news" placeholder="Текст экстренной новости...">
-                <button onclick="postNewsAdmin()" class="btn">Опубликовать</button>
+                <b>📢 Новости</b>
+                <input type="text" id="adm-news" placeholder="Текст...">
+                <button onclick="postNewsAdmin()" class="btn">Выпустить</button>
             </div>
-
             <div class="card">
-                <b>🏢 Управление персоналом</b>
-                <input type="text" id="adm-t" placeholder="Ник бобра">
+                <b>🏢 Персонал</b>
+                <input type="text" id="adm-t" placeholder="Ник">
                 <input type="text" id="adm-j" placeholder="Должность">
                 <input type="number" id="adm-p" placeholder="Зарплата">
-                <div style="display:flex; gap:5px;">
-                    <button onclick="setJobAdmin()" class="btn btn-success">Нанять</button>
-                    <button onclick="fireUserAdmin()" class="btn btn-danger">Уволить</button>
-                </div>
+                <button onclick="setJobAdmin()" class="btn btn-success">Назначить</button>
             </div>
-
             <div class="card">
-                <b>💸 Штрафные санкции</b>
-                <input type="text" id="adm-f-u" placeholder="Ник нарушителя">
-                <input type="number" id="adm-f-v" placeholder="Сумма штрафа">
-                <input type="text" id="adm-f-r" placeholder="Причина (Статья)">
-                <button onclick="issueFineAdmin()" class="btn btn-danger">Выписать штраф</button>
+                <b>💰 Эмиссия</b>
+                <input type="number" id="adm-print" placeholder="Сумма">
+                <button onclick="printMoneyAdmin()" class="btn btn-gold">Выдать себе</button>
             </div>
-
-            <div class="card">
-                <b>💰 Эмиссия (Печать ББ)</b>
-                <input type="number" id="adm-print" placeholder="Сумма для себя">
-                <button onclick="printMoneyAdmin()" class="btn btn-gold">Напечатать деньги</button>
-            </div>
-
             <div id="admin-pass-requests"></div>
         </div>
     </div>
@@ -191,17 +166,26 @@
     async function login() {
         const n = document.getElementById('l-name').value.trim();
         const p = document.getElementById('l-pass').value;
-        if(!n || !p) return;
+        const btn = document.getElementById('login-btn');
+        if(!n || !p) return alert("Заполни поля!");
 
-        const snap = await db.ref('users/'+n).get();
-        if(snap.exists()) {
-            if(snap.val().pass === p) { user = n; startApp(); }
-            else alert("Неверный пароль!");
-        } else {
-            if(n === "Президент Мирон" && p !== "bobr") return alert("Доступ запрещен!");
-            await db.ref('users/'+n).set({ pass:p, balance:(n==="Президент Мирон"?1000000:500), current_job:"Гражданин", weekly_pay:0 });
-            user = n; startApp();
-        }
+        btn.disabled = true; btn.innerText = "Вход...";
+
+        try {
+            const snap = await db.ref('users/'+n).once('value');
+            if(snap.exists()) {
+                if(snap.val().pass === p) { user = n; startApp(); }
+                else alert("Неверный пароль!");
+            } else {
+                if(n === "Президент Мирон" && p !== "bobr") {
+                    alert("Доступ ограничен!");
+                } else {
+                    await db.ref('users/'+n).set({ pass:p, balance:(n==="Президент Мирон"?1000000:500), current_job:"Гражданин", weekly_pay:0 });
+                    user = n; startApp();
+                }
+            }
+        } catch(e) { alert("Ошибка сети"); }
+        btn.disabled = false; btn.innerText = "Войти / Регистрация";
     }
 
     function startApp() {
@@ -209,92 +193,105 @@
         document.getElementById('app').classList.remove('hidden');
         document.getElementById('u-display').innerText = user;
         if(user === "Президент Мирон" || user === "Маша") document.getElementById('n-admin').classList.remove('hidden');
+        updateUI();
     }
 
     function updateUI() {
-        if(!data.users) return;
-        const u = data.users[user] || {};
+        const u = (data.users && data.users[user]) ? data.users[user] : {};
         const isAdmin = (user === "Президент Мирон" || user === "Маша");
 
         document.getElementById('bank-bal').innerText = (u.balance || 0).toLocaleString();
         document.getElementById('job-title').innerText = u.current_job || "Гражданин";
         document.getElementById('job-pay').innerText = u.weekly_pay || 0;
 
-        // Штрафы игрока
+        if(u.passport) document.getElementById('passport-display').innerHTML = `<div class="card" style="border:2px solid var(--gold)">✅ ПАСПОРТ: ${u.passport.name}</div>`;
+        else document.getElementById('passport-display').innerHTML = "";
+        
         const fDisp = document.getElementById('fine-display'); fDisp.innerHTML = "";
         if(u.fines) Object.entries(u.fines).forEach(([id, f]) => {
-            fDisp.innerHTML += `<div class="card" style="border:2px solid red;">⚖️ ШТРАФ: ${f.reason} (${f.amount} ББ) <button onclick="payFine('${id}',${f.amount})" class="btn btn-danger">Оплатить</button></div>`;
+            fDisp.innerHTML += `<div class="card" style="border:2px solid red;">⚖️ ШТРАФ: ${f.amount} ББ <button onclick="payFine('${id}',${f.amount})" class="btn btn-danger" style="width:auto">Оплатить</button></div>`;
         });
 
-        // Новости
-        if(data.news) {
-            document.getElementById('news-feed').innerHTML = Object.entries(data.news).reverse().slice(0,8).map(([id, n]) => `
-                <div style="padding:8px 0; border-bottom:1px solid #eee;">
-                    ${isAdmin ? `<button onclick="deleteNewsAdmin('${id}')" class="del-x">✖</button>` : ''}
-                    • ${n.text}
-                </div>`).join('');
-        }
+        if(data.news) document.getElementById('news-feed').innerHTML = Object.entries(data.news).reverse().slice(0,8).map(([id, n]) => `<div>${isAdmin?`<button onclick="db.ref('news/${id}').remove()" class="del-x">✖</button>`:''} • ${n.text}</div>`).join('');
+        if(data.uk_laws) document.getElementById('uk-laws-list').innerHTML = Object.entries(data.uk_laws).map(([st, t]) => `<div class="card">${isAdmin?`<button onclick="db.ref('uk_laws/${st}').remove()" class="del-x">✖</button>`:''}<b>Ст. ${st.replace('_','.')}</b>: ${t}</div>`).join('');
 
-        // УК
-        if(data.uk_laws) {
-            document.getElementById('uk-laws-list').innerHTML = Object.entries(data.uk_laws).map(([st, txt]) => `
-                <div class="card" style="border-left:4px solid var(--gold)">
-                    ${isAdmin ? `<button onclick="deleteUKAdmin('${st}')" class="del-x">✖</button>` : ''}
-                    <b>Ст. ${st.replace('_','.')}</b>: ${txt}
-                </div>`).join('');
-        }
-
-        // Чат
+        const cb = document.getElementById('chat-box');
         if(data.chat) {
-            const cb = document.getElementById('chat-box');
             cb.innerHTML = Object.values(data.chat).slice(-30).map(m => `<div class="msg ${m.user===user?'my':''}"><b>${m.user}:</b> ${m.text}</div>`).join('');
             cb.scrollTop = cb.scrollHeight;
         }
 
-        // Вакансии
-        if(data.job_vacancies) {
-            document.getElementById('vac-list').innerHTML = Object.entries(data.job_vacancies).map(([id, v]) => `
-                <div class="card" style="display:flex; justify-content:space-between;">
-                    <span>${v.title} (${v.pay} ББ)</span>
-                    <button onclick="takeJob('${id}','${v.title}',${v.pay})" class="btn btn-success" style="width:auto;">Вступить</button>
-                </div>`).join('');
+        // ОБНОВЛЕННАЯ ВИТРИНА WILD BOBR
+        const mList = document.getElementById('market-list'); 
+        mList.innerHTML = "<h3>🛒 Витрина</h3>";
+        if(data.market) {
+            Object.entries(data.market).reverse().forEach(([id, m]) => {
+                const isMyItem = m.seller === user;
+                mList.innerHTML += `
+                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 5px solid var(--wb);">
+                        <span>
+                            <b style="font-size:16px;">${m.name}</b><br>
+                            <span style="color:var(--success); font-weight:bold;">${m.cost.toLocaleString()} ББ</span><br>
+                            <small>Продавец: ${m.seller}</small>
+                        </span>
+                        ${isMyItem ? 
+                            `<button onclick="db.ref('market/${id}').remove()" class="btn btn-danger" style="width:auto; padding:8px 12px;">Удалить</button>` : 
+                            `<button onclick="buyItem('${id}',${m.cost},'${m.seller}')" class="btn btn-success" style="width:auto; padding:8px 12px;">Купить</button>`
+                        }
+                    </div>`;
+            });
         }
 
-        // Админка: Заявки на паспорт
         if(isAdmin) {
-            const adPass = document.getElementById('admin-pass-requests');
-            adPass.innerHTML = "<h3>Заявки на паспорт</h3>";
+            const adP = document.getElementById('admin-pass-requests'); adP.innerHTML = "<h3>Заявки на паспорт</h3>";
             if(data.passport_requests) Object.entries(data.passport_requests).forEach(([id, r]) => {
-                adPass.innerHTML += `<div class="card">${id}: <b>${r.name}</b> <button onclick="approvePass('${id}')" class="btn btn-success">Выдать</button></div>`;
+                adP.innerHTML += `<div class="card">${id} -> ${r.name} <button onclick="approvePass('${id}')" class="btn btn-success">Выдать</button></div>`;
             });
         }
     }
 
-    // --- Функции Юзера ---
     function changePassword() { const np = prompt("Новый пароль:"); if(np) db.ref('users/'+user).update({ pass: np.trim() }); }
     function sendMsg() { const i = document.getElementById('chat-input'); if(i.value) { db.ref('chat').push({user, text:i.value}); i.value=""; } }
-    function takeJob(id, title, pay) { db.ref('users/'+user).update({ current_job: title, weekly_pay: pay }); }
-    function sendPassportReq() { const n = document.getElementById('p-name-input').value; if(n) db.ref('passport_requests/'+user).set({name:n}); }
-    function payFine(id, s) { if(data.users[user].balance >= s) { db.ref('users/'+user+'/balance').transaction(b => b-s); db.ref('users/'+user+'/fines/'+id).remove(); } }
+    
     function doTransfer() {
-        const t = document.getElementById('tr-to').value; const s = Number(document.getElementById('tr-sum').value);
-        if(data.users[user].balance >= s && data.users[t] && s > 0) {
+        const t = document.getElementById('tr-to').value.trim(); const s = Number(document.getElementById('tr-sum').value);
+        if(data.users[user].balance >= s && data.users[t] && s > 0 && t !== user) {
             db.ref('users/'+user+'/balance').transaction(b => b-s);
             db.ref('users/'+t+'/balance').transaction(b => b+s);
-        }
+            alert("Переведено!");
+        } else { alert("Ошибка перевода (неверный ник или мало ББ)"); }
     }
 
-    // --- Функции Админа ---
+    // ВЫКЛАДЫВАНИЕ НА ВБ
+    function postToWB() { 
+        const nInput = document.getElementById('wb-n');
+        const pInput = document.getElementById('wb-p');
+        const n = nInput.value.trim(); 
+        const p = Number(pInput.value); 
+        if(n && p > 0) {
+            db.ref('market').push({name:n, cost:p, seller:user}); 
+            nInput.value = ""; pInput.value = "";
+            alert("Товар выставлен!");
+        } else { alert("Введите название и цену!"); }
+    }
+
+    function buyItem(id, cost, seller) { 
+        if(data.users[user].balance >= cost) {
+            db.ref('users/'+user+'/balance').transaction(b => b-cost);
+            db.ref('users/'+seller+'/balance').transaction(b => b+cost);
+            db.ref('market/'+id).remove();
+            alert("Покупка совершена!");
+        } else alert("Мало ББ!");
+    }
+
+    function sendPassportReq() { const n = document.getElementById('p-name-input').value; if(n) db.ref('passport_requests/'+user).set({name:n}); alert("Отправлено!"); }
+    function payFine(id, s) { if(data.users[user].balance >= s) { db.ref('users/'+user+'/balance').transaction(b => b-s); db.ref('users/'+user+'/fines/'+id).remove(); } }
     function addUKAdmin() { db.ref('uk_laws/' + document.getElementById('adm-uk-st').value.replace('.','_')).set(document.getElementById('adm-uk-text').value); }
-    function deleteUKAdmin(st) { db.ref('uk_laws/'+st).remove(); }
-    function deleteNewsAdmin(id) { db.ref('news/'+id).remove(); }
     function postNewsAdmin() { db.ref('news').push({ text: "📢 ПРЕЗИДЕНТ: " + document.getElementById('adm-news').value }); }
     function setJobAdmin() { db.ref('users/'+document.getElementById('adm-t').value).update({ current_job: document.getElementById('adm-j').value, weekly_pay: Number(document.getElementById('adm-p').value) }); }
-    function fireUserAdmin() { db.ref('users/'+document.getElementById('adm-t').value).update({ current_job: "Безработный", weekly_pay: 0 }); }
-    function issueFineAdmin() { db.ref('users/'+document.getElementById('adm-f-u').value+'/fines').push({ amount: Number(document.getElementById('adm-f-v').value), reason: document.getElementById('adm-f-r').value }); }
     function printMoneyAdmin() { db.ref('users/'+user+'/balance').transaction(b => b + Number(document.getElementById('adm-print').value)); }
     function approvePass(id) { db.ref('users/'+id+'/passport').set(data.passport_requests[id]); db.ref('passport_requests/'+id).remove(); }
-    
+
     function setTab(t, el) {
         document.querySelectorAll('[id^="tab-"]').forEach(x => x.classList.add('hidden'));
         document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
