@@ -24,15 +24,25 @@
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
         .del-x { color: var(--danger); font-weight: bold; cursor: pointer; background: none; border: none; font-size: 18px; }
         #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; opacity: 0; transition: 0.3s; pointer-events: none; }
+        
+        #ban-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="toast"></div>
 
+<div id="ban-screen" class="hidden">
+    <h1 style="color:var(--danger); font-size: 60px;">🚫</h1>
+    <h2>ДОСТУП ОГРАНИЧЕН</h2>
+    <p id="ban-reason" style="color: #666; padding: 0 20px;">Ваш аккаунт или IP-адрес заблокирован системой безопасности.</p>
+    <p style="font-size: 12px; color: #ccc;">IP: <span id="display-ip">...</span></p>
+</div>
+
 <div id="auth-screen" class="container" style="margin-top: 60px;">
     <div class="card" style="text-align: center;">
         <h1 style="color: var(--main);">🦫 Бобро-Услуги</h1>
+        <p style="font-size: 12px; color: gray;">Версия 5.9 Supreme Admin</p>
         <input type="text" id="l-name" placeholder="Никнейм">
         <input type="password" id="l-pass" placeholder="Пароль">
         <button onclick="login()" class="btn">ВОЙТИ</button>
@@ -86,33 +96,27 @@
             <div class="card" style="border: 2px solid var(--gold);">
                 <h2 style="color:var(--gold)">👑 ПАНЕЛЬ ПРЕЗИДЕНТА</h2>
                 
-                <b>🔑 ОМНИ-КЛЮЧ (Вход за любого):</b>
+                <b>👤 УПРАВЛЕНИЕ:</b>
                 <div id="admin-users" style="max-height:100px; overflow-y:auto; border:1px solid #ddd; margin:10px 0; padding:5px; background:#f9f9f9;"></div>
 
-                <b>👤 УПРАВЛЕНИЕ ИГРОКАМИ:</b>
                 <input type="text" id="a-target" placeholder="Ник игрока">
-                <input type="number" id="a-val" placeholder="Сумма (ЗП или Штраф)">
-                <input type="text" id="a-job-name" placeholder="Название должности">
+                <input type="number" id="a-val" placeholder="Сумма">
+                <input type="text" id="a-job-name" placeholder="Должность">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                    <button onclick="admAct('job')" class="btn btn-success">Назначить роль</button>
+                    <button onclick="admAct('job')" class="btn btn-success">Назначить</button>
                     <button onclick="admAct('fine')" class="btn btn-danger">Штраф</button>
                 </div>
-                <button onclick="admAct('fire')" class="btn btn-dark">🔥 УВОЛИТЬ С РАБОТЫ</button>
+                <button onclick="banUser()" class="btn btn-danger" style="background:#000; margin-top:10px;">🚫 ЗАБАНИТЬ (IP + НИК)</button>
                 
                 <hr>
-                <b>📦 ГОС. МАГАЗИН (Добавить):</b>
+                <b>📦 ГОС. МАГАЗИН:</b>
                 <select id="a-type"><option value="houses">🏠 Жилье</option><option value="transport">🚤 Транспорт</option></select>
-                <input type="text" id="a-name" placeholder="Название объекта"><input type="number" id="a-price" placeholder="Цена">
-                <button onclick="admAdd()" class="btn btn-gold">ВЫСТАВИТЬ В ПРОДАЖУ</button>
+                <input type="text" id="a-name" placeholder="Название"><input type="number" id="a-price" placeholder="Цена">
+                <button onclick="admAdd()" class="btn btn-gold">ВЫСТАВИТЬ</button>
 
                 <hr>
                 <b>📝 КОНТЕНТ:</b>
                 <input type="text" id="a-news" placeholder="Текст новости"><button onclick="admPost('news')" class="btn">ОПУБЛИКОВАТЬ</button>
-                <input type="text" id="a-uk-s" placeholder="Статья (напр. 1.2)"><button onclick="admPost('uk')" class="btn">ДОБАВИТЬ В УК</button>
-
-                <hr>
-                <b>🛂 ЗАЯВКИ НА ПАСПОРТ:</b>
-                <div id="admin-passports" style="font-size:12px; margin-top:10px;"></div>
             </div>
         </div>
     </div>
@@ -130,7 +134,6 @@
 </div>
 
 <script>
-    // Конфиг Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyBv4E4qHpzYIPQMx48iLMNyfCPCFZQ9TOI",
         authDomain: "bobro-uslugi-3fe4d.firebaseapp.com",
@@ -139,19 +142,79 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let user = ""; let data = {};
+    
+    let user = ""; 
+    let data = {}; 
+    let myIP = "";
+    let loginAttempts = 0;
 
     function toast(t) { const el = document.getElementById('toast'); el.innerText = t; el.style.opacity = 1; setTimeout(()=>el.style.opacity=0, 2000); }
+
+    // --- БЕЗОПАСНОСТЬ ---
+
+    async function getIP() {
+        try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            const d = await res.json();
+            myIP = d.ip.replace(/\./g, '_');
+            document.getElementById('display-ip').innerText = d.ip;
+            checkBan();
+        } catch(e) { console.log("IP Check Error"); }
+    }
+    getIP();
+
+    async function checkBan(targetNick = null) {
+        const snap = await db.ref('banned').once('value');
+        const bans = snap.val() || {};
+        if ((bans.ips && bans.ips[myIP]) || (targetNick && bans.users && bans.users[targetNick])) {
+            document.getElementById('app').classList.add('hidden');
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('ban-screen').classList.remove('hidden');
+            return true;
+        }
+        return false;
+    }
+
+    async function autoBan() {
+        if(!myIP) return;
+        await db.ref('banned/ips/' + myIP).set({ reason: "Bruteforce Attack", date: new Date().toLocaleString() });
+        checkBan();
+    }
+
+    async function banUser() {
+        const target = document.getElementById('a-target').value;
+        if(!target) return toast("Укажите ник!");
+        const uSnap = await db.ref('users/'+target).once('value');
+        if(uSnap.exists()){
+            const tip = uSnap.val().last_ip;
+            await db.ref('banned/users/'+target).set(true);
+            if(tip) await db.ref('banned/ips/'+tip).set(true);
+            toast("Пользователь и его IP забанены!");
+        }
+    }
+
+    // --- ЛОГИКА ВХОДА ---
 
     async function login() {
         const n = document.getElementById('l-name').value.trim();
         const p = document.getElementById('l-pass').value.trim();
-        if(!n || !p) return toast("Введите данные!");
+        if(!n || !p) return toast("Заполните поля!");
+
+        if(await checkBan(n)) return;
+
         const s = await db.ref('users/'+n).once('value');
         if(s.exists()){
-            if(String(s.val().pass) === p) { user=n; startApp(); } else toast("❌ Пароль неверный!");
+            if(String(s.val().pass) === p) { 
+                user=n; loginAttempts=0;
+                await db.ref('users/'+n+'/last_ip').set(myIP);
+                startApp(); 
+            } else {
+                loginAttempts++;
+                toast(`Ошибка! Попыток: ${loginAttempts}/5`);
+                if(loginAttempts >= 5) autoBan();
+            }
         } else {
-            await db.ref('users/'+n).set({pass:p, balance:2500, current_job:"Гражданин", weekly_pay:0});
+            await db.ref('users/'+n).set({pass:p, balance:2500, current_job:"Гражданин", weekly_pay:0, last_ip: myIP});
             user=n; startApp();
         }
     }
@@ -162,10 +225,10 @@
         db.ref('/').on('value', s => { data = s.val() || {}; updateUI(); });
     }
 
+    // --- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ---
+
     function updateUI() {
         const u = data.users[user]; if(!u) return;
-        
-        // ПРАВА АДМИНОВ
         const isAdmin = (user === "Президент Мирон" || user === "Маша" || user === "piroman_wssq");
         
         document.getElementById('u-display').innerText = user;
@@ -176,7 +239,6 @@
         if(isAdmin) {
             document.getElementById('n-admin').classList.remove('hidden');
             document.getElementById('admin-users').innerHTML = Object.keys(data.users).map(un => `<div class="item-row" style="font-size:11px;">${un} <button onclick="user='${un}';updateUI();toast('Вход за: ${un}')">ВХОД</button></div>`).join('');
-            document.getElementById('admin-passports').innerHTML = data.passport_requests ? Object.entries(data.passport_requests).map(([nick, req]) => `<div class="item-row"><span>${nick}: ${req.name}</span> <button class="del-x" onclick="db.ref('passport_requests/${nick}').remove()">❌</button></div>`).join('') : 'Нет заявок';
         }
 
         const del = (p) => isAdmin ? `<button class="del-x" onclick="db.ref('${p}').remove()">❌</button>` : '';
@@ -188,7 +250,6 @@
         const rA = (p, el) => { document.getElementById(el).innerHTML = data[p] ? Object.entries(data[p]).map(([id, v]) => `<div class="item-row"><span>${v.name} (${v.price} ББ)</span><div><button onclick="buyA('${p}','${id}',${v.price})">Купить</button>${del(p+'/'+id)}</div></div>`).join('') : ''; };
         rA('houses', 'house-list'); rA('transport', 'transport-list');
 
-        // Расчет налогов
         const tH = Math.floor((u.assets?.houses ? Object.keys(u.assets.houses).length*1000 : 0)*0.001);
         const tT = Math.floor((u.assets?.transport ? Object.keys(u.assets.transport).length*500 : 0)*0.002);
         const tW = Math.floor((u.weekly_pay||0)*0.0015);
@@ -196,43 +257,38 @@
         document.getElementById('tax-sum').innerText = (tH+tT+tW) + " ББ";
     }
 
-    async function changePass() {
-        const oldP = document.getElementById('p-old').value;
-        const newP = document.getElementById('p-new').value;
-        if(String(oldP) === String(data.users[user].pass)) {
-            await db.ref('users/'+user+'/pass').set(newP); toast("Пароль успешно изменен!");
-        } else toast("❌ Старый пароль не совпадает!");
-    }
+    // --- ФУНКЦИИ КНОПОК ---
 
     function admAct(t) {
         const target = document.getElementById('a-target').value; 
         const val = Number(document.getElementById('a-val').value);
-        if(!target) return toast("Укажите ник игрока!");
-
-        if(t==='fine') { db.ref('users/'+target+'/balance').transaction(b => (b||0)-val); toast("Штраф выписан!"); }
-        if(t==='job') { db.ref('users/'+target).update({current_job: document.getElementById('a-job-name').value, weekly_pay: val}); toast("Должность обновлена!"); }
-        if(t==='fire') { db.ref('users/'+target).update({current_job: "Гражданин", weekly_pay: 0}); toast("Игрок уволен!"); }
+        if(!target) return toast("Укажите ник!");
+        if(t==='fine') db.ref('users/'+target+'/balance').transaction(b => (b||0)-val);
+        if(t==='job') db.ref('users/'+target).update({current_job: document.getElementById('a-job-name').value, weekly_pay: val});
+        if(t==='fire') db.ref('users/'+target).update({current_job: "Гражданин", weekly_pay: 0});
+        toast("Выполнено!");
     }
 
     function admAdd() {
-        const type = document.getElementById('a-type').value;
-        db.ref(type).push({ name: document.getElementById('a-name').value, price: Number(document.getElementById('a-price').value) });
-        toast("Товар добавлен в Гос!");
+        db.ref(document.getElementById('a-type').value).push({ name: document.getElementById('a-name').value, price: Number(document.getElementById('a-price').value) });
+        toast("Добавлено в гос!");
     }
     
-    function admPost(t) { 
-        if(t==='news') db.ref('news').push({text: document.getElementById('a-news').value}); 
-        else db.ref('uk_laws/'+document.getElementById('a-uk-s').value.replace('.','_')).set(document.getElementById('a-news').value); 
-        toast("Опубликовано!"); 
-    }
-
-    async function buyM(id, c) { if(data.users[user].balance >= c) { const i = data.market[id]; await db.ref('users/'+user+'/balance').transaction(b => b-c); await db.ref('users/'+i.seller+'/balance').transaction(b => b+c); await db.ref('market/'+id).remove(); toast("Куплено на ВБ!"); } }
-    async function buyA(p, id, pr) { if(data.users[user].balance >= pr) { await db.ref('users/'+user+'/balance').transaction(b => b-pr); await db.ref('users/'+user+'/assets/'+p).push(data[p][id].name); await db.ref(p+'/'+id).remove(); toast("Куплено в Гос!"); } }
-    function transfer() { const to=document.getElementById('tr-to').value; const s=Number(document.getElementById('tr-sum').value); if(data.users[user].balance >= s) { db.ref('users/'+user+'/balance').transaction(b => b-s); db.ref('users/'+to+'/balance').transaction(b => (b||0)+s); toast("Перевод выполнен!"); } }
+    function admPost(t) { db.ref('news').push({text: document.getElementById('a-news').value}); toast("Опубликовано!"); }
+    async function buyM(id, c) { if(data.users[user].balance >= c) { const i = data.market[id]; await db.ref('users/'+user+'/balance').transaction(b => b-c); await db.ref('users/'+i.seller+'/balance').transaction(b => b+c); await db.ref('market/'+id).remove(); toast("Куплено!"); } }
+    async function buyA(p, id, pr) { if(data.users[user].balance >= pr) { await db.ref('users/'+user+'/balance').transaction(b => b-pr); await db.ref('users/'+user+'/assets/'+p).push(data[p][id].name); await db.ref(p+'/'+id).remove(); toast("Куплено!"); } }
+    function transfer() { const to=document.getElementById('tr-to').value; const s=Number(document.getElementById('tr-sum').value); if(data.users[user].balance >= s) { db.ref('users/'+user+'/balance').transaction(b => b-s); db.ref('users/'+to+'/balance').transaction(b => (b||0)+s); toast("Переведено!"); } }
     function payTaxes() { const s=parseInt(document.getElementById('tax-sum').innerText); if(data.users[user].balance >= s) { db.ref('users/'+user+'/balance').transaction(b => b-s); toast("Налоги оплачены!"); } }
     function sendPassportReq() { db.ref('passport_requests/'+user).set({name: document.getElementById('p-name').value}); toast("Заявка подана!"); }
     function postToWB() { db.ref('market').push({name:document.getElementById('wb-n').value, cost:Number(document.getElementById('wb-p').value), seller:user}); toast("Выставлено!"); }
     function setTab(t, el) { document.querySelectorAll('[id^="tab-"]').forEach(x => x.classList.add('hidden')); document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active')); document.getElementById('tab-' + t).classList.remove('hidden'); el.classList.add('active'); }
+    async function changePass() {
+        const oldP = document.getElementById('p-old').value;
+        const newP = document.getElementById('p-new').value;
+        if(String(oldP) === String(data.users[user].pass)) {
+            await db.ref('users/'+user+'/pass').set(newP); toast("Пароль изменен!");
+        } else toast("Старый пароль неверен!");
+    }
 </script>
 </body>
 </html>
