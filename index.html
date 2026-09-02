@@ -1,266 +1,637 @@
-<!D<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бобро-Услуги 5.9 — ПОЛНАЯ ВЕРСИЯ</title>
+    <title>Бобро-Услуги: ОФИЦИАЛЬНЫЙ ПОРТАЛ</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        :root { --main: #007bff; --bg: #f4f6f9; --card: #ffffff; --text: #1c1e21; --border: #ebedf0; --danger: #e74c3c; --success: #2ecc71; --gold: #ffd700; --wb: #6f42c1; --dark: #212529; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
+        :root { 
+            --main: #0066ff; --bg: #f8f9fa; --card: #ffffff; --text: #1d1d1f; 
+            --border: #e1e3e6; --danger: #ff3b30; --success: #34c759; --muted: #86868b;
+        }
+        * { box-sizing: border-box; outline: none; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; 
+            -webkit-tap-highlight-color: transparent; transition: 0.3s;
+        }
         .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
         .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: var(--card); padding: 18px; border-radius: 16px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        header { padding: 15px 20px; background: var(--main); color: white; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; background: var(--main); color: white; margin-top: 5px; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); opacity: 0.8; }
+        .card { 
+            background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 15px; 
+            border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
+            transition: transform 0.2s; 
+        }
+        
+        header { 
+            background: var(--card); padding: 15px 20px; display: flex; justify-content: space-between; 
+            align-items: center; position: sticky; top: 0; z-index: 100; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 1px solid var(--border);
+        }
+        .bell-icon { font-size: 22px; cursor: pointer; position: relative; }
+        .badge { 
+            position: absolute; top: -5px; right: -5px; background: var(--danger); 
+            color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; 
+        }
+        .notifications-dropdown {
+            position: absolute; top: 60px; right: 10px; background: white; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 300px; max-height: 400px; overflow-y: auto;
+            border: 1px solid var(--border); z-index: 200; padding: 10px; display: none;
+        }
+
+        .btn { 
+            width: 100%; padding: 14px; border-radius: 14px; border: none; font-weight: 600; 
+            cursor: pointer; background: var(--main); color: white; margin-top: 10px; 
+            transition: all 0.2s; font-size: 15px; 
+        }
+        .btn:active { transform: scale(0.96); opacity: 0.9; }
         .btn-danger { background: var(--danger); }
         .btn-success { background: var(--success); }
-        .btn-gold { background: var(--gold); color: black; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1.5px solid var(--border); box-sizing: border-box; font-size: 14px; }
-        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid var(--border); height: 75px; z-index: 1000; overflow-x: auto; }
-        .nav-tab { flex: 1; min-width: 65px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: #8e8e93; cursor: pointer; text-align: center; }
-        .nav-tab.active { color: var(--main); font-weight: bold; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .del-x { color: var(--danger); font-weight: bold; cursor: pointer; background: none; border: none; }
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 40000; opacity: 0; transition: 0.3s; pointer-events: none; }
+        .btn-secondary { background: #e5e5ea; color: var(--text); }
+        input, select, textarea { 
+            width: 100%; padding: 14px; margin: 8px 0; border-radius: 14px; 
+            border: 1px solid var(--border); background: #f2f2f7; font-size: 15px; transition: 0.3s; 
+        }
+        input:focus, textarea:focus { border-color: var(--main); background: white; box-shadow: 0 0 0 3px rgba(0,102,255,0.2); }
+
+        .nav-bar { 
+            display: flex; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+            position: fixed; bottom: 0; width: 100%; height: 75px; z-index: 1000; 
+            border-top: 1px solid var(--border); overflow-x: auto;
+        }
+        .nav-tab { 
+            flex: 1; min-width: 65px; display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; font-size: 10px; color: var(--muted); cursor: pointer; transition: 0.3s;
+        }
+        .nav-tab.active { color: var(--main); transform: scale(1.05); }
+        .nav-tab i { font-size: 20px; margin-bottom: 4px; font-style: normal; }
+
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .item-row:last-child { border-bottom: none; }
+        .role-badge { display: inline-block; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; background: #e5e5ea; }
+
+        .rf-doc {
+            background: linear-gradient(135deg, #ffffff 0%, #fff5f5 50%, #f5f5ff 100%);
+            border: 2px solid #a32020; border-radius: 12px; padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05); position: relative; overflow: hidden;
+            margin-top: 10px; text-align: left;
+        }
+        .rf-doc::before {
+            content: '🇷🇺'; font-size: 80px; position: absolute; opacity: 0.05;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .rf-title { font-weight: 800; color: #a32020; text-align: center; text-transform: uppercase; border-bottom: 1px solid #a32020; padding-bottom: 5px; margin-bottom: 10px; }
+        .rf-field { font-size: 12px; color: #555; margin-bottom: 2px; }
+        .rf-value { font-size: 14px; font-weight: bold; color: #000; margin-bottom: 10px; }
+
+        #chat-messages { height: 300px; overflow-y: auto; background: #f2f2f7; padding: 10px; border-radius: 15px; margin-bottom: 10px; }
+        .msg-bubble { background: white; padding: 10px 15px; border-radius: 18px; display: inline-block; max-width: 80%; margin-bottom: 10px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .msg-sys { text-align: center; color: var(--danger); font-size: 12px; margin: 5px 0; }
         
-        /* DDoS ЭКРАН */
-        #ddos-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; color: #00ff41; z-index: 30000; font-family: 'Courier New', monospace; padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
-        .stop-btn { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; margin-top: 20px; cursor: pointer; box-shadow: 0 0 20px rgba(255,0,0,0.6); width: 100%; font-family: 'Segoe UI', sans-serif; }
+        #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 600; z-index: 50000; opacity: 0; pointer-events: none; transition: 0.3s; }
     </style>
 </head>
 <body>
 
 <div id="toast"></div>
 
-<div id="ddos-screen" class="hidden">
-    <div style="text-shadow: 0 0 5px #00ff41;">
-        <h1 id="ddos-title" style="color: #ff3e3e; font-size: 22px;">[SYSTEM CRITICAL]</h1>
-        <p id="ddos-info">> ИСТОЧНИК: ТРАССИРОВКА...</p>
-        <hr border="1" color="#00ff41">
-        <div id="ddos-logs" style="height: 180px; overflow: hidden; font-size: 11px;"></div>
-        <button id="admin-stop-btn" class="stop-btn hidden" onclick="toggleDDoS()">🛑 ОСТАНОВИТЬ АТАКУ (ADMIN ONLY)</button>
-        <p id="beaver-msg" style="margin-top:15px; font-size: 12px; color: #888;">Защита Bobr-Shield активирована Президентом.</p>
-    </div>
-</div>
-
-<div id="auth-screen" class="container" style="margin-top: 60px;">
-    <div class="card" style="text-align: center;">
+<div id="auth-screen" class="container fade-in" style="margin-top: 50px;">
+    <div class="card" style="text-align: center; padding: 30px 20px;">
         <h1 style="color: var(--main); margin-bottom: 5px;">🦫 Бобро-Услуги</h1>
-        <p style="font-size: 12px; color: gray; margin-bottom: 20px;">Версия 5.9 Supreme Admin</p>
-        <input type="text" id="l-name" placeholder="Ваш никнейм">
-        <input type="password" id="l-pass" placeholder="Ваш пароль">
-        <button onclick="login()" class="btn">ВОЙТИ В СИСТЕМУ</button>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 25px;">Единый государственный портал</p>
+        
+        <div id="auth-choice">
+            <button onclick="showAuthForm('login')" class="btn">ВОЙТИ В АККАУНТ</button>
+            <button onclick="showAuthForm('reg')" class="btn btn-secondary" style="margin-top: 10px;">РЕГИСТРАЦИЯ</button>
+        </div>
+
+        <div id="reg-form" class="hidden fade-in">
+            <h3 style="margin-top:0;">Создание аккаунта</h3>
+            <input type="text" id="reg-phone" value="+7" placeholder="+79806567600">
+            <input type="text" id="reg-nick" placeholder="Ваш никнейм">
+            <input type="password" id="reg-pass" placeholder="Придумайте пароль">
+            <button onclick="registerUser()" class="btn btn-success">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+            <button onclick="resetAuth()" class="btn btn-secondary" style="margin-top: 5px;">Назад</button>
+        </div>
+
+        <div id="login-form" class="hidden fade-in">
+            <h3 style="margin-top:0;">Вход в систему</h3>
+            <input type="text" id="login-nick" placeholder="Ваш никнейм">
+            <input type="password" id="login-pass" placeholder="Ваш пароль">
+            <button onclick="loginUser()" class="btn">ВОЙТИ</button>
+            <button onclick="resetAuth()" class="btn btn-secondary" style="margin-top: 5px;">Назад</button>
+        </div>
     </div>
 </div>
 
-<div id="app" class="hidden">
-    <header><b>👤 <span id="u-display"></span></b> <button onclick="location.reload()" style="background:none; border:1px solid white; color:white; border-radius:8px; padding:5px; font-size:10px;">ВЫХОД</button></header>
+<div id="app" class="hidden fade-in">
+    <header>
+        <div><b>👤 <span id="h-nick"></span></b> <span id="h-role" class="role-badge"></span></div>
+        <div class="bell-icon" onclick="toggleNotifications()">
+            🔔<span class="badge hidden" id="notif-badge">0</span>
+            <div class="notifications-dropdown" id="notif-drop">
+                <h4 style="margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Уведомления</h4>
+                <div id="notif-list" style="font-size: 13px;">Пусто</div>
+            </div>
+        </div>
+    </header>
 
     <div class="container">
-        <div id="tab-gos">
-            <div id="admin-only-defense" class="hidden" style="background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #00ff41;">
-                <b style="color: #00ff41; font-family: monospace;">🛡️ УПРАВЛЕНИЕ ЗАЩИТОЙ</b>
-                <button onclick="toggleDDoS()" class="btn" style="background:#000; color:#0f0; margin-top:10px; border: 1px solid #0f0; font-family: monospace;">[ АКТИВИРОВАТЬ BOBR-SHIELD ]</button>
+        <div id="tab-main" class="tab-content">
+            <div id="admin-news-box" class="card hidden">
+                <h3>📝 Опубликовать новость</h3>
+                <textarea id="news-text" rows="2" placeholder="Текст новости..."></textarea>
+                <button class="btn" onclick="postNews()">ОПУБЛИКОВАТЬ</button>
             </div>
-            <div class="card"><h3>📢 Новости</h3><div id="news-feed"></div></div>
-            <div class="card"><h3>🛂 Паспортный стол</h3><input type="text" id="p-name" placeholder="ФИО для паспорта"><button onclick="sendPassportReq()" class="btn">ПОДАТЬ ЗАЯВКУ</button></div>
+            <h3 style="margin-left: 10px;">📰 Новости государства</h3>
+            <div id="news-feed"></div>
         </div>
 
-        <div id="tab-wb" class="hidden">
-            <div class="card" style="background:var(--wb); color:white;"><h3>🛍️ WildBobr Market</h3></div>
+        <div id="tab-bank" class="tab-content hidden">
+            <div class="card" style="background: linear-gradient(135deg, var(--main), #00aaff); color: white; text-align: center; border:none;">
+                <p style="margin:0; opacity: 0.8;">Ваш баланс</p>
+                <h1 style="margin: 5px 0; font-size: 40px;" id="bank-bal">0 ₽</h1>
+            </div>
             <div class="card">
-                <h4>Выставить товар:</h4>
-                <input type="text" id="wb-n" placeholder="Название товара">
-                <input type="number" id="wb-p" placeholder="Цена в ББ">
-                <button onclick="postToWB()" class="btn" style="background:var(--wb)">ВЫСТАВИТЬ НА ПРОДАЖУ</button>
+                <h3>💸 Перевод по номеру телефона</h3>
+                <input type="text" id="transfer-phone" value="+7" placeholder="+79806567600">
+                <input type="number" id="transfer-sum" placeholder="Сумма ₽">
+                <button class="btn btn-success" onclick="transferMoney()">ОТПРАВИТЬ ДЕНЬГИ</button>
             </div>
-            <div id="market-list"></div>
-        </div>
-
-        <div id="tab-profile" class="hidden">
-            <div class="card"><h3>💼 Ваша работа</h3>
-                <div class="item-row"><span>Должность:</span> <b id="p-job">-</b></div>
-                <div class="item-row"><span>Зарплата:</span> <b id="p-pay">0</b> ББ</div>
-            </div>
-            <div class="card"><h3>🔐 Безопасность</h3>
-                <input type="password" id="p-old" placeholder="Старый пароль">
-                <input type="password" id="p-new" placeholder="Новый пароль">
-                <button onclick="changePass()" class="btn">СМЕНИТЬ ПАРОЛЬ</button>
-            </div>
-        </div>
-
-        <div id="tab-assets" class="hidden">
-            <div class="card"><h3>🏠 Ваше Жилье</h3><div id="my-houses"></div><hr><h4>Купить гос. жилье:</h4><div id="house-list"></div></div>
-            <div class="card"><h3>🚤 Ваш Транспорт</h3><div id="my-transport"></div><hr><h4>Купить гос. транспорт:</h4><div id="transport-list"></div></div>
-        </div>
-
-        <div id="tab-bank" class="hidden">
-            <div class="card" style="background:var(--success); color:white; text-align:center;"><h1 id="u-bal">0</h1><p>Ваш баланс ББ</p></div>
             <div class="card">
-                <h3>💸 Быстрый перевод</h3>
-                <input type="text" id="tr-to" placeholder="Ник получателя">
-                <input type="number" id="tr-sum" placeholder="Сумма ББ">
-                <button onclick="transfer()" class="btn btn-success">ОТПРАВИТЬ ДЕНЬГИ</button>
-            </div>
-            <div class="card" style="background: #2c3e50; color: white;">
-                <h3>💰 Налоговый долг: <span id="tax-sum">0</span> ББ</h3>
-                <button onclick="payTaxes()" class="btn btn-gold">ОПЛАТИТЬ НАЛОГИ</button>
+                <h3>💰 Налоги: <span id="tax-amount" style="color:var(--danger)">0</span> ₽</h3>
+                <button class="btn btn-secondary" onclick="payTaxes()">ОПЛАТИТЬ НАЛОГИ</button>
             </div>
         </div>
 
-        <div id="tab-admin" class="hidden">
-            <div class="card" style="border: 2px solid var(--gold);">
-                <h2 style="color:var(--gold)">👑 ПАНЕЛЬ ПРЕЗИДЕНТА</h2>
-                <div id="admin-users" style="max-height:100px; overflow-y:auto; border:1px solid #ddd; margin:10px 0; padding:5px; background:#f9f9f9; font-size: 11px;"></div>
-                <input type="text" id="a-target" placeholder="Ник игрока">
-                <input type="number" id="a-val" placeholder="Значение (ЗП/Сумма)">
-                <input type="text" id="a-job-name" placeholder="Название должности">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                    <button onclick="admAct('job')" class="btn btn-success">Назначить</button>
-                    <button onclick="admAct('fine')" class="btn btn-danger">Штраф</button>
+        <div id="tab-wb" class="tab-content hidden">
+            <div class="card">
+                <h3>🛍️ Выставить товар</h3>
+                <input type="text" id="wb-name" placeholder="Название товара">
+                <input type="number" id="wb-price" placeholder="Цена ₽">
+                <button class="btn" onclick="addWbItem()" style="background: #8a2be2;">ВЫСТАВИТЬ В BOBROZONE</button>
+            </div>
+            <h3 style="margin-left: 10px;">📦 Каталог товаров</h3>
+            <div id="wb-list"></div>
+        </div>
+
+        <div id="tab-docs" class="tab-content hidden">
+            <div class="card" id="docs-apply-box">
+                <h3>🛂 Оформление документов</h3>
+                <select id="doc-type">
+                    <option value="passport">Паспорт РФ</option>
+                    <option value="med">Медицинская карта</option>
+                    <option value="drive">Водительское удостоверение</option>
+                </select>
+                <input type="text" id="doc-fio" placeholder="Полное ФИО">
+                <input type="text" id="doc-age" placeholder="Возраст/Дата рождения">
+                <button class="btn" onclick="applyForDoc()">ПОДАТЬ ЗАЯВЛЕНИЕ</button>
+            </div>
+            <h3 style="margin-left: 10px;">📂 Ваши документы</h3>
+            <div id="my-docs-list">У вас пока нет оформленных документов.</div>
+        </div>
+
+        <div id="tab-prof" class="tab-content hidden">
+            <div class="card">
+                <h2 style="margin-top:0;" id="p-nick">Никнейм</h2>
+                <div class="item-row"><span>Телефон:</span> <b id="p-phone">-</b></div>
+                <div class="item-row"><span>Статус:</span> <b id="p-role">-</b></div>
+                <div class="item-row"><span>Работа:</span> <b id="p-job">-</b></div>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin-top:0;">✏️ Смена никнейма</h3>
+                <input type="text" id="new-nick-input" placeholder="Новый никнейм">
+                <button class="btn" onclick="changeNickname()">ИЗМЕНИТЬ НИКНЕЙМ</button>
+            </div>
+
+            <h3 style="margin-left: 10px;">🏠 Ваше Имущество</h3>
+            <div class="card" id="my-assets-list">Ничего нет.</div>
+            <button class="btn btn-danger" onclick="location.reload()">ВЫЙТИ ИЗ АККАУНТА</button>
+        </div>
+
+        <div id="tab-assets" class="tab-content hidden">
+            <div id="admin-assets-box" class="card hidden">
+                <h3>🔨 Добавить недвижимость (Админ)</h3>
+                <input type="text" id="ast-name" placeholder="Название (напр. BMW M5)">
+                <input type="number" id="ast-price" placeholder="Цена ₽">
+                <button class="btn" onclick="addAsset()">ВЫСТАВИТЬ ИМУЩЕСТВО</button>
+            </div>
+            <h3 style="margin-left: 10px;">🌆 Доступное имущество</h3>
+            <div id="assets-list"></div>
+        </div>
+
+        <div id="tab-chat" class="tab-content hidden">
+            <div class="card">
+                <h3 style="margin-top:0; color: var(--main);">💬 Общая группа БИ</h3>
+                <div id="chat-messages"></div>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="chat-input" placeholder="Сообщение..." style="margin:0;">
+                    <button class="btn" style="width: auto; margin:0;" onclick="sendChat()">➤</button>
                 </div>
-                <hr>
-                <b>📦 Добавить в гос. магазин:</b>
-                <select id="a-type"><option value="houses">🏠 Жилье</option><option value="transport">🚤 Транспорт</option></select>
-                <input type="text" id="a-name" placeholder="Название объекта">
-                <input type="number" id="a-price" placeholder="Цена">
-                <button onclick="admAdd()" class="btn btn-gold">ВЫСТАВИТЬ НА ПРОДАЖУ</button>
-                <hr>
-                <b>📢 Опубликовать новость:</b>
-                <input type="text" id="a-news" placeholder="Текст новости">
-                <button onclick="admPost()" class="btn">ОПУБЛИКОВАТЬ</button>
+            </div>
+        </div>
+
+        <div id="tab-admin" class="tab-content hidden">
+            <div class="card" style="border: 2px solid var(--danger);">
+                <h2 style="margin-top:0; color: var(--danger);">⚙️ ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
+                
+                <div id="adm-docs-sec" class="hidden">
+                    <h4>🛂 Заявки на документы</h4>
+                    <div id="adm-docs-list" style="max-height: 200px; overflow-y:auto;"></div>
+                    <hr>
+                </div>
+
+                <div id="adm-users-sec" class="hidden">
+                    <h4>👥 Действия с игроком</h4>
+                    <input type="text" id="adm-target" placeholder="Никнейм игрока">
+                    <input type="number" id="adm-val" placeholder="Сумма / Минуты мута">
+                    <input type="text" id="adm-text" placeholder="Текст (Причина/Должность)">
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                        <button class="btn btn-secondary" onclick="admAction('fine')">Штраф</button>
+                        <button class="btn btn-secondary" onclick="admAction('job')">Устроить</button>
+                        <button class="btn btn-danger" onclick="admAction('mute')">Выдать Мут</button>
+                        <button class="btn btn-success" onclick="admAction('print')">Печать Денег</button>
+                    </div>
+                    <hr>
+                </div>
+
+                <div id="adm-roles-sec" class="hidden">
+                    <h4>👑 Управление ролями</h4>
+                    <select id="adm-role-sel">
+                        <option value="0">Гражданин</option>
+                        <option value="1">Модератор</option>
+                        <option value="2">Администратор</option>
+                        <option value="3" id="opt-pres" class="hidden">Президент</option>
+                        <option value="4" id="opt-ga" class="hidden">Главный Админ</option>
+                    </select>
+                    <button class="btn" onclick="admAction('role')">НАЗНАЧИТЬ РОЛЬ</button>
+                    <button id="adm-ban-btn" class="btn btn-danger hidden" onclick="admAction('ban')">ЗАБАНИТЬ НА ПОРТАЛЕ</button>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-tab active" onclick="setTab('gos', this)">🏛️ Гос</div>
-        <div class="nav-tab" onclick="setTab('wb', this)">🛍️ ВБ</div>
-        <div class="nav-tab" onclick="setTab('profile', this)">👤 Проф</div>
-        <div class="nav-tab" onclick="setTab('assets', this)">🏠 Имущ</div>
-        <div class="nav-tab" onclick="setTab('bank', this)">🏦 Банк</div>
-        <div id="n-admin" class="nav-tab hidden" onclick="setTab('admin', this)">👑</div>
+        <div class="nav-tab active" onclick="setTab('main', this)"><i>📰</i>Главная</div>
+        <div class="nav-tab" onclick="setTab('bank', this)"><i>🏦</i>Банк</div>
+        <div class="nav-tab" onclick="setTab('wb', this)"><i>🛍️</i>BobroZone</div>
+        <div class="nav-tab" onclick="setTab('docs', this)"><i>🛂</i>Документы</div>
+        <div class="nav-tab" onclick="setTab('prof', this)"><i>👤</i>Проф</div>
+        <div class="nav-tab" onclick="setTab('assets', this)"><i>🏠</i>Имущ</div>
+        <div class="nav-tab" onclick="setTab('chat', this)"><i>💬</i>Чат</div>
+        <div class="nav-tab hidden" id="nav-admin" onclick="setTab('admin', this)"><i>⚙️</i>Админ</div>
     </div>
 </div>
-
 <script>
     const firebaseConfig = { apiKey: "AIzaSyBv4E4qHpzYIPQMx48iLMNyfCPCFZQ9TOI", authDomain: "bobro-uslugi-3fe4d.firebaseapp.com", databaseURL: "https://bobro-uslugi-3fe4d-default-rtdb.firebaseio.com", projectId: "bobro-uslugi-3fe4d" };
     firebase.initializeApp(firebaseConfig); const db = firebase.database();
-    let user = ""; let data = {};
 
-    function toast(t) { const el = document.getElementById('toast'); el.innerText = t; el.style.opacity = 1; setTimeout(()=>el.style.opacity=0, 2000); }
-    function getMSK() { return new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow' }); }
+    const ROLES = { 0: "Гражданин", 1: "Модератор", 2: "Администратор", 3: "Президент", 4: "Главный Админ" };
+    let userNick = "", userPhone = "", myRole = 0, userData = {};
 
-    // --- DDOS LOGIC ---
-    function toggleDDoS() {
-        const isA = data.system_status?.is_attack || false;
-        const attackers = ["Shadow_Beaver_228", "Anti-Bober_Group", "Hack_Rat_X"];
-        db.ref('system_status').update({ 
-            is_attack: !isA, 
-            attack_info: { 
-                attacker: attackers[Math.floor(Math.random()*attackers.length)], 
-                start_time: getMSK(), 
-                location: "Скрытый прокси-сервер" 
-            } 
-        });
-        toast(isA ? "Атака успешно отбита!" : "ВКЛЮЧЕН РЕЖИМ ЗАЩИТЫ!");
-    }
-
-    function runLogs() {
-        const l = document.getElementById('ddos-logs'); const t = getMSK();
-        const lines = [`[${t}] BLOCK: ${Math.floor(Math.random()*255)}.XXX.XXX`, `[${t}] Request rejected: Flood_L7`, `[${t}] Shield: Filtering...` ];
-        l.innerHTML += `<p style="margin:2px 0;">> ${lines[Math.floor(Math.random()*lines.length)]}</p>`;
-        if(l.childNodes.length > 10) l.removeChild(l.firstChild);
-    }
-    setInterval(() => { if(data.system_status?.is_attack) runLogs(); }, 700);
-
-    // --- AUTH ---
-    async function login() {
-        const n = document.getElementById('l-name').value.trim(); const p = document.getElementById('l-pass').value.trim();
-        if(!n || !p) return toast("Введите данные!");
-        const s = await db.ref('users/'+n).once('value');
-        if(s.exists() && String(s.val().pass) === p) { user=n; startApp(); }
-        else if(!s.exists()) { user=n; await db.ref('users/'+n).set({pass:p, balance:2500, current_job:"Гражданин"}); startApp(); }
-        else toast("Неверный пароль!");
-    }
-
-    function startApp() { document.getElementById('auth-screen').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); db.ref('/').on('value', s => { data = s.val() || {}; updateUI(); }); }
-
-    // --- UPDATE UI ---
-    function updateUI() {
-        const u = data.users[user]; if(!u) return;
-        const isMiron = (user === "Президент Мирон");
-        const isAdmin = (isMiron || user === "Маша" || user === "piroman_wssq");
-
-        // DDoS Screen
-        if(data.system_status?.is_attack) {
-            document.getElementById('ddos-screen').classList.remove('hidden');
-            document.getElementById('ddos-title').innerText = `[АТАКА: ${data.system_status.attack_info.start_time}]`;
-            document.getElementById('ddos-info').innerText = `> ИСТОЧНИК: ${data.system_status.attack_info.attacker}`;
-            if(isMiron) document.getElementById('admin-stop-btn').classList.remove('hidden');
+    function toast(t) { const el = document.getElementById('toast'); el.innerText = t; el.style.opacity = 1; setTimeout(()=>el.style.opacity=0, 2500); }
+    
+    // --- ПЕРЕКЛЮЧЕНИЕ ФОРМ ВХОДА / РЕГИСТРАЦИИ ---
+    function showAuthForm(type) {
+        document.getElementById('auth-choice').classList.add('hidden');
+        if(type === 'reg') {
+            document.getElementById('reg-form').classList.remove('hidden');
         } else {
-            document.getElementById('ddos-screen').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        }
+    }
+
+    function resetAuth() {
+        document.getElementById('reg-form').classList.add('hidden');
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('auth-choice').classList.remove('hidden');
+    }
+
+    // --- РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ ---
+    async function registerUser() {
+        const phone = document.getElementById('reg-phone').value.trim();
+        const nick = document.getElementById('reg-nick').value.trim();
+        const pass = document.getElementById('reg-pass').value.trim();
+
+        if(!phone || phone === '+7' || !nick || !pass) return toast("Заполните все поля!");
+
+        const snap = await db.ref('users/' + nick).once('value');
+        if(snap.exists()) return toast("Пользователь с таким ником уже есть!");
+
+        // Автоматическая выдача 4 ранга для Президента Мирона
+        const assignedRole = (nick.toLowerCase() === 'президент мирон' || nick.toLowerCase() === 'мирон') ? 4 : 0;
+
+        await db.ref('users/' + nick).set({ 
+            pass: pass, 
+            phone: phone, 
+            role: assignedRole, 
+            balance: assignedRole === 4 ? 1000000 : 1000, 
+            job: assignedRole === 4 ? "Главный Админ / Президент" : "Безработный" 
+        });
+
+        userNick = nick;
+        userPhone = phone;
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        initAppListeners();
+        toast("Успешная регистрация!");
+    }
+
+    // --- ВХОД В АККАУНТ ---
+    async function loginUser() {
+        const nick = document.getElementById('login-nick').value.trim();
+        const pass = document.getElementById('login-pass').value.trim();
+
+        if(!nick || !pass) return toast("Заполните все поля!");
+
+        const snap = await db.ref('users/' + nick).once('value');
+        if(!snap.exists()) return toast("Пользователь не найден!");
+        if(snap.val().pass !== pass) return toast("Неверный пароль!");
+        if(snap.val().isBanned) return toast("Ваш аккаунт заблокирован!");
+
+        // Проверка и гарантированное обновление 4 ранга для Президента Мирона при входе
+        if(nick.toLowerCase() === 'президент мирон' || nick.toLowerCase() === 'мирон') {
+            await db.ref('users/' + nick + '/role').set(4);
         }
 
-        // Admin Buttons
-        if(isMiron) document.getElementById('admin-only-defense').classList.remove('hidden');
-        if(isAdmin) {
-            document.getElementById('n-admin').classList.remove('hidden');
-            document.getElementById('admin-users').innerHTML = Object.keys(data.users).map(un => `<div class="item-row">${un} <button onclick="user='${un}';updateUI();toast('Вход за ${un}')">Вход</button></div>`).join('');
+        userNick = nick;
+        userPhone = snap.val().phone;
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        initAppListeners();
+        toast("Вы успешно вошли!");
+    }
+
+    // --- СМЕНА НИКНЕЙМА ---
+    async function changeNickname() {
+        const newNick = document.getElementById('new-nick-input').value.trim();
+        if(!newNick) return toast("Введите новый никнейм!");
+        if(newNick === userNick) return toast("Новый ник совпадает с текущим!");
+
+        // Ограничение смены ника на спец-ники
+        if((newNick.toLowerCase() === 'президент мирон' || newNick.toLowerCase() === 'мирон') && myRole < 4) {
+            return toast("Этот ник зарезервирован для Президента!");
         }
 
-        // Profile & Bank
-        document.getElementById('u-display').innerText = user;
-        document.getElementById('u-bal').innerText = (u.balance || 0) + " ББ";
-        document.getElementById('p-job').innerText = u.current_job || "Гражданин";
-        document.getElementById('p-pay').innerText = (u.weekly_pay || 0);
+        const checkSnap = await db.ref('users/' + newNick).once('value');
+        if(checkSnap.exists()) return toast("Никнейм уже занят!");
 
-        // News & Market
-        const delBtn = (path) => isAdmin ? `<button class="del-x" onclick="db.ref('${path}').remove()">❌</button>` : '';
-        document.getElementById('news-feed').innerHTML = data.news ? Object.entries(data.news).reverse().map(([id, n]) => `<div class="item-row"><span>• ${n.text}</span>${delBtn('news/'+id)}</div>`).join('') : '';
-        document.getElementById('market-list').innerHTML = data.market ? Object.entries(data.market).map(([id, i]) => `<div class="item-row"><div><b>${i.name}</b><br><small>Прод: ${i.seller}</small></div><div>${i.cost} ББ <button onclick="buyM('${id}',${i.cost})">Купить</button>${delBtn('market/'+id)}</div></div>`).join('') : '';
+        db.ref('users/' + userNick).off();
 
-        // Assets
-        const renderAssets = (type, listId, myId) => {
-            document.getElementById(listId).innerHTML = data[type] ? Object.entries(data[type]).map(([id, v]) => `<div class="item-row"><span>${v.name} (${v.price} ББ)</span><button onclick="buyA('${type}','${id}',${v.price})">Купить</button></div>`).join('') : 'Нет в продаже';
-            document.getElementById(myId).innerHTML = u.assets && u.assets[type] ? Object.entries(u.assets[type]).map(([id, name]) => `<div class="item-row"><span>${name}</span></div>`).join('') : 'Ничего нет';
-        };
-        renderAssets('houses', 'house-list', 'my-houses');
-        renderAssets('transport', 'transport-list', 'my-transport');
+        await db.ref('users/' + newNick).set(userData);
+        await db.ref('users/' + userNick).remove();
 
-        // Taxes
-        const tax = Math.floor(((u.assets?.houses ? Object.keys(u.assets.houses).length*1000 : 0) + (u.assets?.transport ? Object.keys(u.assets.transport).length*500 : 0)) * 0.002);
-        document.getElementById('tax-sum').innerText = tax;
+        const oldNick = userNick;
+        userNick = newNick;
+
+        notify(userNick, `✏️ Вы сменили ник с ${oldNick} на ${userNick}`);
+        document.getElementById('new-nick-input').value = '';
+        toast("Никнейм успешно изменён!");
+
+        initAppListeners();
     }
 
-    // --- ACTIONS ---
-    function setTab(t, el) { document.querySelectorAll('[id^="tab-"]').forEach(x => x.classList.add('hidden')); document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active')); document.getElementById('tab-' + t).classList.remove('hidden'); el.classList.add('active'); }
-    function admPost() { db.ref('news').push({text: document.getElementById('a-news').value}); toast("Пост опубликован!"); }
-    function admAct(t) {
-        const target = document.getElementById('a-target').value; const val = Number(document.getElementById('a-val').value);
-        if(!target) return toast("Ник?");
-        if(t==='fine') db.ref('users/'+target+'/balance').transaction(b => (b||0)-val);
-        else db.ref('users/'+target).update({current_job: document.getElementById('a-job-name').value, weekly_pay: val});
-        toast("Выполнено");
+    function setTab(t, el) { 
+        document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
+        document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+        document.getElementById('tab-' + t).classList.remove('hidden'); el.classList.add('active'); 
     }
-    function admAdd() { db.ref(document.getElementById('a-type').value).push({ name: document.getElementById('a-name').value, price: Number(document.getElementById('a-price').value) }); toast("Добавлено"); }
-    function transfer() {
-        const to=document.getElementById('tr-to').value; const s=Number(document.getElementById('tr-sum').value);
-        if(data.users[user].balance >= s && data.users[to]) { db.ref('users/'+user+'/balance').transaction(b => b-s); db.ref('users/'+to+'/balance').transaction(b => (b||0)+s); toast("Успешно!"); }
-        else toast("Ошибка!");
+    function toggleNotifications() { const drop = document.getElementById('notif-drop'); drop.style.display = drop.style.display === 'block' ? 'none' : 'block'; }
+
+    function initAppListeners() {
+        db.ref('users/' + userNick).on('value', s => {
+            userData = s.val() || {};
+            if(userData.isBanned) { alert("Ваш аккаунт забанен."); location.reload(); }
+            myRole = userData.role || 0;
+            updateUI();
+        });
+
+        db.ref('users/' + userNick + '/notifications').on('value', s => {
+            const notifs = s.val() || {};
+            const arr = Object.values(notifs).reverse();
+            document.getElementById('notif-badge').innerText = arr.length;
+            document.getElementById('notif-badge').classList.toggle('hidden', arr.length === 0);
+            document.getElementById('notif-list').innerHTML = arr.length ? arr.map(n => `<div class="item-row" style="padding:5px 0;">${n.text}</div>`).join('') : "Пусто";
+        });
+
+        db.ref('news').on('value', s => renderList(s.val(), 'news-feed', renderNewsItem));
+        db.ref('wb').on('value', s => renderList(s.val(), 'wb-list', renderWbItem));
+        db.ref('assets').on('value', s => renderList(s.val(), 'assets-list', renderAssetItem));
+        db.ref('doc_requests').on('value', s => renderAdminDocs(s.val()));
+        db.ref('chat').on('value', s => renderChat(s.val()));
     }
-    async function buyM(id, c) { if(data.users[user].balance >= c) { const i = data.market[id]; await db.ref('users/'+user+'/balance').transaction(b => b-c); await db.ref('users/'+i.seller+'/balance').transaction(b => b+c); await db.ref('market/'+id).remove(); toast("Куплено!"); } }
-    async function buyA(p, id, pr) { if(data.users[user].balance >= pr) { await db.ref('users/'+user+'/balance').transaction(b => b-pr); await db.ref('users/'+user+'/assets/'+p).push(data[p][id].name); await db.ref(p+'/'+id).remove(); toast("Поздравляем!"); } }
-    function postToWB() { db.ref('market').push({name:document.getElementById('wb-n').value, cost:Number(document.getElementById('wb-p').value), seller:user}); toast("Выставлено!"); }
-    function payTaxes() { const s=parseInt(document.getElementById('tax-sum').innerText); if(data.users[user].balance >= s) { db.ref('users/'+user+'/balance').transaction(b => b-s); toast("Налоги оплачены"); } }
-    function sendPassportReq() { db.ref('passport_requests/'+user).set({name: document.getElementById('p-name').value}); toast("Заявка ушла!"); }
-    async function changePass() { 
-        const oldP = document.getElementById('p-old').value; const newP = document.getElementById('p-new').value;
-        if(String(oldP) === String(data.users[user].pass)) { await db.ref('users/'+user+'/pass').set(newP); toast("Пароль изменен!"); }
+
+    function updateUI() {
+        document.getElementById('h-nick').innerText = userNick;
+        document.getElementById('h-role').innerText = ROLES[myRole];
+        document.getElementById('bank-bal').innerText = userData.balance + " ₽";
+        document.getElementById('p-nick').innerText = userNick;
+        document.getElementById('p-phone').innerText = userData.phone;
+        document.getElementById('p-role').innerText = ROLES[myRole];
+        document.getElementById('p-job').innerText = userData.job || "Безработный";
+        
+        const assetCount = userData.assets ? Object.keys(userData.assets).length : 0;
+        document.getElementById('tax-amount').innerText = assetCount * 500;
+
+        const myDocs = userData.docs || {};
+        document.getElementById('my-docs-list').innerHTML = Object.keys(myDocs).length ? 
+            Object.values(myDocs).map(d => `<div class="rf-doc"><div class="rf-title">${d.type}</div><div class="rf-field">ФИО:</div><div class="rf-value">${d.fio}</div><div class="rf-field">Данные:</div><div class="rf-value">${d.age}</div></div>`).join('') 
+            : "У вас пока нет оформленных документов.";
+
+        const myAsts = userData.assets || {};
+        document.getElementById('my-assets-list').innerHTML = Object.keys(myAsts).length ? 
+            Object.values(myAsts).map(a => `<div class="item-row"><b>${a}</b></div>`).join('') : "Ничего нет.";
+
+        document.getElementById('nav-admin').classList.toggle('hidden', myRole < 1);
+        document.getElementById('adm-docs-sec').classList.toggle('hidden', myRole < 1);
+        document.getElementById('admin-news-box').classList.toggle('hidden', myRole < 2);
+        document.getElementById('admin-assets-box').classList.toggle('hidden', myRole < 3);
+        document.getElementById('adm-users-sec').classList.toggle('hidden', myRole < 3);
+        document.getElementById('adm-roles-sec').classList.toggle('hidden', myRole < 3);
+        
+        if (myRole >= 4) {
+            document.getElementById('opt-pres').classList.remove('hidden');
+            document.getElementById('opt-ga').classList.remove('hidden');
+            document.getElementById('adm-ban-btn').classList.remove('hidden');
+        }
     }
+
+    function renderList(data, elId, htmlFunc) {
+        document.getElementById(elId).innerHTML = data ? Object.entries(data).reverse().map(([id, item]) => htmlFunc(id, item)).join('') : "<p style='color:gray'>Пусто</p>";
+    }
+
+    function postNews() {
+        const text = document.getElementById('news-text').value.trim();
+        if(!text) return;
+        db.ref('news').push({ text, author: userNick, time: new Date().toLocaleTimeString() });
+        document.getElementById('news-text').value = ''; toast("Опубликовано!");
+    }
+    const renderNewsItem = (id, n) => `<div class="card" style="padding:15px; margin-bottom:10px;"><b>🗣️ ${n.author}</b> <span style="font-size:11px;color:gray">${n.time}</span><p style="margin:5px 0 0 0;font-size:14px;">${n.text}</p>${myRole >= 2 ? `<button class="btn btn-danger" style="padding:5px; margin-top:10px;" onclick="db.ref('news/${id}').remove()">Удалить</button>` : ''}</div>`;
+
+    async function transferMoney() {
+        const phone = document.getElementById('transfer-phone').value.trim();
+        const sum = parseInt(document.getElementById('transfer-sum').value);
+        if(!phone || phone === '+7' || !sum || sum <= 0 || sum > userData.balance) return toast("Ошибка ввода или нехватка средств!");
+        if(phone === userData.phone) return toast("Нельзя перевести себе!");
+
+        const usersSnap = await db.ref('users').once('value');
+        let targetNick = null;
+        usersSnap.forEach(child => { if(child.val().phone === phone) targetNick = child.key; });
+        
+        if(!targetNick) return toast("Пользователь с таким номером не найден!");
+        
+        await db.ref('users/' + userNick + '/balance').transaction(b => (b||0) - sum);
+        await db.ref('users/' + targetNick + '/balance').transaction(b => (b||0) + sum);
+        notify(targetNick, `💸 Вам поступил перевод ${sum} ₽`);
+        toast("Перевод успешен!");
+    }
+    function payTaxes() {
+        const tax = parseInt(document.getElementById('tax-amount').innerText);
+        if(tax === 0) return toast("У вас нет долгов по налогам!");
+        if(userData.balance < tax) return toast("Недостаточно средств!");
+        db.ref('users/' + userNick + '/balance').transaction(b => b - tax); toast("Налоги оплачены!");
+    }
+
+    function addWbItem() {
+        const name = document.getElementById('wb-name').value; const price = parseInt(document.getElementById('wb-price').value);
+        if(!name || !price) return;
+        db.ref('wb').push({ name, price, owner: userNick }); toast("Товар выставлен!");
+    }
+    async function buyWb(id, price, owner) {
+        if(userData.balance < price) return toast("Нет денег!");
+        await db.ref('users/' + userNick + '/balance').transaction(b => b - price);
+        await db.ref('users/' + owner + '/balance').transaction(b => b + price);
+        await db.ref('wb/' + id).remove();
+        notify(owner, `🛍️ Ваш товар купил ${userNick} за ${price} ₽`);
+        toast("Успешная покупка!");
+    }
+    function delWb(id, owner) {
+        const reason = prompt("Причина удаления товара?");
+        if(!reason) return;
+        db.ref('wb/' + id).remove();
+        notify(owner, `🚫 Администратор удалил ваш товар. Причина: ${reason}`);
+    }
+    const renderWbItem = (id, i) => `<div class="item-row card" style="padding:15px; margin-bottom:10px;"><div><b style="font-size:16px;">${i.name}</b><br><small style="color:gray">Прод: ${i.owner}</small></div><div><b style="color:var(--main)">${i.price} ₽</b><br><button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="buyWb('${id}', ${i.price}, '${i.owner}')">Купить</button> ${myRole >= 2 ? `<br><button class="btn btn-danger" style="padding:5px; margin-top:5px;" onclick="delWb('${id}', '${i.owner}')">Удалить</button>` : ''}</div></div>`;
+
+    function applyForDoc() {
+        const type = document.getElementById('doc-type').options[document.getElementById('doc-type').selectedIndex].text;
+        const fio = document.getElementById('doc-fio').value; const age = document.getElementById('doc-age').value;
+        if(!fio || !age) return toast("Заполните данные!");
+        db.ref('doc_requests').push({ user: userNick, type, fio, age });
+        toast("Заявка отправлена модераторам!");
+        
+        db.ref('users').once('value', s => {
+            s.forEach(c => { if(c.val().role >= 1) notify(c.key, `🛂 Новая заявка на документ от ${userNick}`); });
+        });
+    }
+    function renderAdminDocs(data) {
+        document.getElementById('adm-docs-list').innerHTML = data ? Object.entries(data).map(([id, d]) => `
+            <div class="card" style="padding:10px; margin-bottom:5px;">
+                <b>${d.user}</b> просит <b>${d.type}</b><br><small>${d.fio}, ${d.age}</small>
+                <div style="display:flex; gap:5px; margin-top:5px;">
+                    <button class="btn btn-success" style="padding:5px; margin:0;" onclick="approveDoc('${id}', '${d.user}', '${d.type}', '${d.fio}', '${d.age}')">Одобрить</button>
+                    <button class="btn btn-danger" style="padding:5px; margin:0;" onclick="rejectDoc('${id}', '${d.user}')">Отказ</button>
+                </div>
+            </div>`).join('') : "<small>Нет новых заявок</small>";
+    }
+    async function approveDoc(reqId, target, type, fio, age) {
+        await db.ref('users/' + target + '/docs').push({ type, fio, age });
+        await db.ref('doc_requests/' + reqId).remove();
+        notify(target, `✅ Ваша заявка на ${type} ОДОБРЕНА!`); toast("Одобрено");
+    }
+    function rejectDoc(reqId, target) {
+        const reason = prompt("Причина отказа?");
+        if(!reason) return;
+        db.ref('doc_requests/' + reqId).remove();
+        notify(target, `❌ Ваша заявка на документы отклонена. Причина: ${reason}`); toast("Отклонено");
+    }
+
+    function addAsset() {
+        const name = document.getElementById('ast-name').value; const price = parseInt(document.getElementById('ast-price').value);
+        if(!name || !price) return;
+        db.ref('assets').push({ name, price }); toast("Выставлено на продажу");
+    }
+    async function buyAsset(id, name, price) {
+        if(userData.balance < price) return toast("Нет денег!");
+        await db.ref('users/' + userNick + '/balance').transaction(b => b - price);
+        await db.ref('users/' + userNick + '/assets').push(name);
+        await db.ref('assets/' + id).remove();
+        toast("Имущество приобретено!");
+    }
+    const renderAssetItem = (id, a) => `<div class="item-row card" style="padding:15px; margin-bottom:10px;"><div><b>${a.name}</b></div><div><b>${a.price} ₽</b><br><button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="buyAsset('${id}', '${a.name}', ${a.price})">Купить</button> ${myRole >= 3 ? `<button class="btn btn-danger" style="padding:5px; margin-top:5px;" onclick="db.ref('assets/${id}').remove()">Снять</button>` : ''}</div></div>`;
+
+    function sendChat() {
+        const text = document.getElementById('chat-input').value.trim();
+        if(!text) return;
+        if(userData.muteEnd && Date.now() < userData.muteEnd) {
+            const left = Math.ceil((userData.muteEnd - Date.now()) / 60000);
+            return toast(`Вы в муте! Осталось: ${left} мин.`);
+        }
+        db.ref('chat').push({ author: userNick, text, role: ROLES[myRole] });
+        document.getElementById('chat-input').value = '';
+    }
+    function renderChat(data) {
+        const box = document.getElementById('chat-messages');
+        box.innerHTML = data ? Object.values(data).map(m => `
+            <div style="margin-bottom:8px; text-align: ${m.author === userNick ? 'right' : 'left'}">
+                <small style="color:gray; font-size:10px;">${m.author} [${m.role}]</small><br>
+                <div class="msg-bubble" style="${m.author === userNick ? 'background:var(--main); color:white;' : ''}">${m.text}</div>
+            </div>`).join('') : "<div class='msg-sys'>Чат пуст</div>";
+        box.scrollTop = box.scrollHeight;
+    }
+
+    async function admAction(action) {
+        const target = document.getElementById('adm-target').value.trim();
+        const val = parseInt(document.getElementById('adm-val').value);
+        const text = document.getElementById('adm-text').value.trim();
+        
+        if(action === 'print') {
+            const sum = val || 1000;
+            db.ref('users/' + userNick + '/balance').transaction(b => (b||0) + sum);
+            return toast(`Напечатано ${sum} ₽`);
+        }
+        
+        if(!target) return toast("Укажите ник игрока!");
+        const tSnap = await db.ref('users/' + target).once('value');
+        if(!tSnap.exists()) return toast("Игрок не найден!");
+
+        if(action === 'fine') {
+            db.ref('users/' + target + '/balance').transaction(b => (b||0) - (val||0));
+            notify(target, `🚨 Вам выписан штраф на сумму ${val} ₽. Причина: ${text}`);
+            toast("Штраф выписан");
+        } 
+        else if(action === 'job') {
+            db.ref('users/' + target).update({ job: text });
+            notify(target, `💼 Вы устроены на новую должность: ${text}`);
+            toast("Устроен");
+        } 
+        else if(action === 'mute') {
+            const muteMs = Date.now() + ((val || 10) * 60000);
+            db.ref('users/' + target).update({ muteEnd: muteMs });
+            db.ref('chat').push({ author: 'СИСТЕМА', text: `Пользователь ${target} получил мут на ${val} минут.`, role: 'SYSTEM' });
+            toast("Мут выдан");
+        }
+        else if(action === 'role') {
+            const role = parseInt(document.getElementById('adm-role-sel').value);
+            if(role >= myRole && myRole < 4) return toast("Вы не можете выдать равную или высшую роль!");
+            db.ref('users/' + target).update({ role });
+            notify(target, `👑 Ваша роль изменена на: ${ROLES[role]}`);
+            toast("Роль обновлена");
+        }
+        else if(action === 'ban' && myRole === 4) {
+            db.ref('users/' + target).update({ isBanned: true });
+            toast("Игрок заблокирован!");
+        }
+    }
+
+    function notify(targetNick, text) { db.ref('users/' + targetNick + '/notifications').push({ text, time: Date.now() }); }
 </script>
 </body>
 </html>
