@@ -93,6 +93,16 @@
         .msg-bubble { background: white; padding: 10px 15px; border-radius: 18px; display: inline-block; max-width: 80%; margin-bottom: 10px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .msg-sys { text-align: center; color: var(--danger); font-size: 12px; margin: 5px 0; }
         
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center; z-index: 10000;
+        }
+        .modal-box {
+            background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); animation: fadeIn 0.2s ease;
+        }
+
         #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 600; z-index: 50000; opacity: 0; pointer-events: none; transition: 0.3s; }
     </style>
 </head>
@@ -100,6 +110,7 @@
 
 <div id="toast"></div>
 
+<!-- Экран Авторизации -->
 <div id="auth-screen" class="container fade-in" style="margin-top: 50px;">
     <div class="card" style="text-align: center; padding: 30px 20px;">
         <h1 style="color: var(--main); margin-bottom: 5px;">🦫 Бобро-Услуги</h1>
@@ -114,7 +125,7 @@
             <h3 style="margin-top:0;">Создание аккаунта</h3>
             <input type="text" id="reg-phone" value="+7" placeholder="+79806567600">
             <input type="text" id="reg-nick" placeholder="Ваш никнейм">
-            <input type="password" id="reg-pass" placeholder="Придумайте пароль">
+            <input type="password" id="reg-pass" placeholder="Придумыйте пароль">
             <button onclick="registerUser()" class="btn btn-success">ЗАРЕГИСТРИРОВАТЬСЯ</button>
             <button onclick="resetAuth()" class="btn btn-secondary" style="margin-top: 5px;">Назад</button>
         </div>
@@ -129,6 +140,7 @@
     </div>
 </div>
 
+<!-- Главное Приложение -->
 <div id="app" class="hidden fade-in">
     <header>
         <div><b>👤 <span id="h-nick"></span></b> <span id="h-role" class="role-badge"></span></div>
@@ -142,6 +154,7 @@
     </header>
 
     <div class="container">
+        <!-- Главная -->
         <div id="tab-main" class="tab-content">
             <div id="admin-news-box" class="card hidden">
                 <h3>📝 Опубликовать новость</h3>
@@ -152,23 +165,60 @@
             <div id="news-feed"></div>
         </div>
 
+        <!-- Банк и Казна -->
         <div id="tab-bank" class="tab-content hidden">
             <div class="card" style="background: linear-gradient(135deg, var(--main), #00aaff); color: white; text-align: center; border:none;">
-                <p style="margin:0; opacity: 0.8;">Ваш баланс</p>
-                <h1 style="margin: 5px 0; font-size: 40px;" id="bank-bal">0 ₽</h1>
+                <p style="margin:0; opacity: 0.8;">Ваш личный баланс</p>
+                <h1 style="margin: 5px 0; font-size: 36px;" id="bank-bal">0 ₽</h1>
             </div>
+
+            <div id="treasury-card" class="card hidden" style="background: linear-gradient(135deg, #ff9500, #ffcc00); color: white; text-align: center; border:none;">
+                <p style="margin:0; opacity: 0.9;">🏛️ Государственная Казна</p>
+                <h1 style="margin: 5px 0; font-size: 36px;" id="treasury-bal">0 ₽</h1>
+                <button class="btn btn-secondary" onclick="openTreasuryModal()" style="margin-top:10px;">Управление Казной</button>
+            </div>
+
             <div class="card">
                 <h3>💸 Перевод по номеру телефона</h3>
                 <input type="text" id="transfer-phone" value="+7" placeholder="+79806567600">
                 <input type="number" id="transfer-sum" placeholder="Сумма ₽">
                 <button class="btn btn-success" onclick="transferMoney()">ОТПРАВИТЬ ДЕНЬГИ</button>
             </div>
+
             <div class="card">
-                <h3>💰 Налоги: <span id="tax-amount" style="color:var(--danger)">0</span> ₽</h3>
-                <button class="btn btn-secondary" onclick="payTaxes()">ОПЛАТИТЬ НАЛОГИ</button>
+                <h3>💰 Налоги за неделю: <span id="tax-amount" style="color:var(--danger)">0</span> ₽</h3>
+                <small style="color:var(--muted); display:block; margin-bottom:10px;">
+                    (8% ЗП + 5% Авто + 7% Недвижимость)
+                </small>
+                <button class="btn btn-secondary" onclick="payTaxes()">ОПЛАТИТЬ НАЛОГИ В КАЗНУ</button>
             </div>
         </div>
 
+        <!-- Работа -->
+        <div id="tab-job" class="tab-content hidden">
+            <div class="card">
+                <h2 style="margin-top:0; color:var(--main);">💼 Ваша трудовая книжка</h2>
+                <div class="item-row"><span>Должность:</span> <b id="job-title">Безработный</b></div>
+                <div class="item-row"><span>Еженедельная ЗП:</span> <b id="job-salary">0 ₽</b></div>
+                <div class="item-row"><span>Следующая выплата:</span> <b id="job-next-pay">-</b></div>
+                <button class="btn btn-success" id="claim-salary-btn" onclick="claimSalary()">ПОЛУЧИТЬ ЗАРПЛАТУ</button>
+                <button class="btn btn-danger" id="quit-job-btn" onclick="quitJob()" style="margin-top:5px;">УВОЛИТЬСЯ</button>
+            </div>
+        </div>
+
+        <!-- Законы -->
+        <div id="tab-laws" class="tab-content hidden">
+            <div id="admin-laws-box" class="card hidden">
+                <h3>📜 Издать закон (Главный Админ)</h3>
+                <input type="text" id="law-title-input" placeholder="Название закона">
+                <textarea id="law-text-input" rows="3" placeholder="Текст и статьи закона..."></textarea>
+                <button class="btn" onclick="publishLaw()">ИЗДАТЬ ЗАКОН</button>
+            </div>
+            <h3 style="margin-left: 10px;">⚖️ Действующее законодательство</h3>
+            <div id="laws-feed"></div>
+        </div>
+
+        <!-- BobroZone -->
         <div id="tab-wb" class="tab-content hidden">
             <div class="card">
                 <h3>🛍️ Выставить товар</h3>
@@ -180,6 +230,7 @@
             <div id="wb-list"></div>
         </div>
 
+        <!-- Документы -->
         <div id="tab-docs" class="tab-content hidden">
             <div class="card" id="docs-apply-box">
                 <h3>🛂 Оформление документов</h3>
@@ -196,6 +247,7 @@
             <div id="my-docs-list">У вас пока нет оформленных документов.</div>
         </div>
 
+        <!-- Профиль -->
         <div id="tab-prof" class="tab-content hidden">
             <div class="card">
                 <h2 style="margin-top:0;" id="p-nick">Никнейм</h2>
@@ -215,20 +267,26 @@
             <button class="btn btn-danger" onclick="location.reload()">ВЫЙТИ ИЗ АККАУНТА</button>
         </div>
 
+        <!-- Имущество -->
         <div id="tab-assets" class="tab-content hidden">
             <div id="admin-assets-box" class="card hidden">
-                <h3>🔨 Добавить недвижимость (Админ)</h3>
-                <input type="text" id="ast-name" placeholder="Название (напр. BMW M5)">
+                <h3>🔨 Добавить имущество (Админ)</h3>
+                <input type="text" id="ast-name" placeholder="Название (напр. BMW M5 или Квартира)">
                 <input type="number" id="ast-price" placeholder="Цена ₽">
+                <select id="ast-type">
+                    <option value="car">🚗 Транспорт (Налог 5%)</option>
+                    <option value="house">🏠 Недвижимость (Налог 7%)</option>
+                </select>
                 <button class="btn" onclick="addAsset()">ВЫСТАВИТЬ ИМУЩЕСТВО</button>
             </div>
             <h3 style="margin-left: 10px;">🌆 Доступное имущество</h3>
             <div id="assets-list"></div>
         </div>
 
+        <!-- Чат -->
         <div id="tab-chat" class="tab-content hidden">
             <div class="card">
-                <h3 style="margin-top:0; color: var(--main);">💬 Общая группа БИ</h3>
+                <h3 style="margin-top:0; color: var(--main);">💬 Общий чат</h3>
                 <div id="chat-messages"></div>
                 <div style="display:flex; gap:10px;">
                     <input type="text" id="chat-input" placeholder="Сообщение..." style="margin:0;">
@@ -237,6 +295,7 @@
             </div>
         </div>
 
+        <!-- Админ-Панель -->
         <div id="tab-admin" class="tab-content hidden">
             <div class="card" style="border: 2px solid var(--danger);">
                 <h2 style="margin-top:0; color: var(--danger);">⚙️ ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
@@ -248,16 +307,14 @@
                 </div>
 
                 <div id="adm-users-sec" class="hidden">
-                    <h4>👥 Действия с игроком</h4>
-                    <input type="text" id="adm-target" placeholder="Никнейм игрока">
-                    <input type="number" id="adm-val" placeholder="Сумма / Минуты мута">
-                    <input type="text" id="adm-text" placeholder="Текст (Причина/Должность)">
+                    <h4>👥 Быстрый выбор игрока</h4>
+                    <input type="text" id="adm-target-global" placeholder="Никнейм игрока">
                     
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                        <button class="btn btn-secondary" onclick="admAction('fine')">Штраф</button>
-                        <button class="btn btn-secondary" onclick="admAction('job')">Устроить</button>
-                        <button class="btn btn-danger" onclick="admAction('mute')">Выдать Мут</button>
-                        <button class="btn btn-success" onclick="admAction('print')">Печать Денег</button>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
+                        <button class="btn btn-secondary" onclick="openAdminModal('fine')">🚨 Штраф</button>
+                        <button class="btn btn-secondary" onclick="openAdminModal('job')">💼 Работа и ЗП</button>
+                        <button class="btn btn-danger" onclick="openAdminModal('mute')">🤐 Мут</button>
+                        <button class="btn btn-success" onclick="openAdminModal('print')">🖨️ Печать денег</button>
                     </div>
                     <hr>
                 </div>
@@ -271,41 +328,71 @@
                         <option value="3" id="opt-pres" class="hidden">Президент</option>
                         <option value="4" id="opt-ga" class="hidden">Главный Админ</option>
                     </select>
-                    <button class="btn" onclick="admAction('role')">НАЗНАЧИТЬ РОЛЬ</button>
-                    <button id="adm-ban-btn" class="btn btn-danger hidden" onclick="admAction('ban')">ЗАБАНИТЬ НА ПОРТАЛЕ</button>
+                    <button class="btn" onclick="applyRoleAction()">НАЗНАЧИТЬ РОЛЬ</button>
+                    <button id="adm-ban-btn" class="btn btn-danger hidden" onclick="applyBanAction()">ЗАБАНИТЬ НА ПОРТАЛЕ</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Нижнее Меню Навигации -->
     <div class="nav-bar">
         <div class="nav-tab active" onclick="setTab('main', this)"><i>📰</i>Главная</div>
         <div class="nav-tab" onclick="setTab('bank', this)"><i>🏦</i>Банк</div>
-        <div class="nav-tab" onclick="setTab('wb', this)"><i>🛍️</i>BobroZone</div>
-        <div class="nav-tab" onclick="setTab('docs', this)"><i>🛂</i>Документы</div>
+        <div class="nav-tab" onclick="setTab('job', this)"><i>💼</i>Работа</div>
+        <div class="nav-tab" onclick="setTab('laws', this)"><i>📜</i>Законы</div>
+        <div class="nav-tab" onclick="setTab('wb', this)"><i>🛍️</i>Маркет</div>
+        <div class="nav-tab" onclick="setTab('docs', this)"><i>🛂</i>Доки</div>
         <div class="nav-tab" onclick="setTab('prof', this)"><i>👤</i>Проф</div>
         <div class="nav-tab" onclick="setTab('assets', this)"><i>🏠</i>Имущ</div>
         <div class="nav-tab" onclick="setTab('chat', this)"><i>💬</i>Чат</div>
         <div class="nav-tab hidden" id="nav-admin" onclick="setTab('admin', this)"><i>⚙️</i>Админ</div>
     </div>
 </div>
-<script>
-    const firebaseConfig = { apiKey: "AIzaSyBv4E4qHpzYIPQMx48iLMNyfCPCFZQ9TOI", authDomain: "bobro-uslugi-3fe4d.firebaseapp.com", databaseURL: "https://bobro-uslugi-3fe4d-default-rtdb.firebaseio.com", projectId: "bobro-uslugi-3fe4d" };
-    firebase.initializeApp(firebaseConfig); const db = firebase.database();
+
+<!-- Модальные окна -->
+<div id="modal-admin" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3 id="modal-title" style="margin-top:0;">Действие</h3>
+        <p id="modal-subtarget" style="color:var(--muted); font-size:13px;"></p>
+        <div id="modal-body"></div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn btn-success" onclick="confirmAdminAction()">Подтвердить</button>
+            <button class="btn btn-secondary" onclick="closeAdminModal()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-treasury" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3 style="margin-top:0;">🏛️ Управление Казной</h3>
+   <script>
+    const firebaseConfig = { 
+        apiKey: "AIzaSyBv4E4qHpzYIPQMx48iLMNyfCPCFZQ9TOI", 
+        authDomain: "bobro-uslugi-3fe4d.firebaseapp.com", 
+        databaseURL: "https://bobro-uslugi-3fe4d-default-rtdb.firebaseio.com", 
+        projectId: "bobro-uslugi-3fe4d" 
+    };
+    
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
 
     const ROLES = { 0: "Гражданин", 1: "Модератор", 2: "Администратор", 3: "Президент", 4: "Главный Админ" };
     let userNick = "", userPhone = "", myRole = 0, userData = {};
+    let currentAdminActionType = "";
 
-    function toast(t) { const el = document.getElementById('toast'); el.innerText = t; el.style.opacity = 1; setTimeout(()=>el.style.opacity=0, 2500); }
-    
-    // --- ПЕРЕКЛЮЧЕНИЕ ФОРМ ВХОДА / РЕГИСТРАЦИИ ---
+    function toast(t) { 
+        const el = document.getElementById('toast'); 
+        el.innerText = t; el.style.opacity = 1; 
+        setTimeout(() => el.style.opacity = 0, 2500); 
+    }
+
     function showAuthForm(type) {
         document.getElementById('auth-choice').classList.add('hidden');
-        if(type === 'reg') {
-            document.getElementById('reg-form').classList.remove('hidden');
-        } else {
-            document.getElementById('login-form').classList.remove('hidden');
-        }
+        if (type === 'reg') document.getElementById('reg-form').classList.remove('hidden');
+        else document.getElementById('login-form').classList.remove('hidden');
     }
 
     function resetAuth() {
@@ -314,96 +401,101 @@
         document.getElementById('auth-choice').classList.remove('hidden');
     }
 
-    // --- РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ ---
-    async function registerUser() {
+    function registerUser() {
         const phone = document.getElementById('reg-phone').value.trim();
         const nick = document.getElementById('reg-nick').value.trim();
         const pass = document.getElementById('reg-pass').value.trim();
 
-        if(!phone || phone === '+7' || !nick || !pass) return toast("Заполните все поля!");
+        if (!phone || phone === '+7' || !nick || !pass) return toast("Заполните все поля!");
 
-        const snap = await db.ref('users/' + nick).once('value');
-        if(snap.exists()) return toast("Пользователь с таким ником уже есть!");
+        db.ref('users/' + nick).once('value').then((snap) => {
+            if (snap.exists()) return toast("Никнейм уже занят!");
 
-        // Автоматическая выдача 4 ранга для Президента Мирона
-        const assignedRole = (nick.toLowerCase() === 'президент мирон' || nick.toLowerCase() === 'мирон') ? 4 : 0;
+            const cleanNick = nick.toLowerCase();
+            const assignedRole = (cleanNick === 'президент мирон' || cleanNick === 'мирон') ? 4 : 0;
 
-        await db.ref('users/' + nick).set({ 
-            pass: pass, 
-            phone: phone, 
-            role: assignedRole, 
-            balance: assignedRole === 4 ? 1000000 : 1000, 
-            job: assignedRole === 4 ? "Главный Админ / Президент" : "Безработный" 
+            db.ref('users/' + nick).set({ 
+                pass: pass, 
+                phone: phone, 
+                role: assignedRole, 
+                balance: assignedRole === 4 ? 1000000 : 1000, 
+                job: assignedRole === 4 ? "Главный Админ / Президент" : "Безработный",
+                salary: 0
+            }).then(() => {
+                userNick = nick; 
+                userPhone = phone;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                initAppListeners();
+                toast("Успешная регистрация!");
+            });
+        }).catch(err => {
+            console.error(err);
+            toast("Ошибка БД: проверьте подключение!");
         });
-
-        userNick = nick;
-        userPhone = phone;
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        initAppListeners();
-        toast("Успешная регистрация!");
     }
 
-    // --- ВХОД В АККАУНТ ---
-    async function loginUser() {
+    function loginUser() {
         const nick = document.getElementById('login-nick').value.trim();
         const pass = document.getElementById('login-pass').value.trim();
 
-        if(!nick || !pass) return toast("Заполните все поля!");
+        if (!nick || !pass) return toast("Заполните все поля!");
 
-        const snap = await db.ref('users/' + nick).once('value');
-        if(!snap.exists()) return toast("Пользователь не найден!");
-        if(snap.val().pass !== pass) return toast("Неверный пароль!");
-        if(snap.val().isBanned) return toast("Ваш аккаунт заблокирован!");
+        db.ref('users/' + nick).once('value').then((snap) => {
+            if (!snap.exists()) return toast("Пользователь не найден!");
+            const data = snap.val();
+            if (data.pass !== pass) return toast("Неверный пароль!");
+            if (data.isBanned) return toast("Ваш аккаунт заблокирован!");
 
-        // Проверка и гарантированное обновление 4 ранга для Президента Мирона при входе
-        if(nick.toLowerCase() === 'президент мирон' || nick.toLowerCase() === 'мирон') {
-            await db.ref('users/' + nick + '/role').set(4);
-        }
+            const cleanNick = nick.toLowerCase();
+            if (cleanNick === 'президент мирон' || cleanNick === 'мирон') {
+                db.ref('users/' + nick + '/role').set(4);
+            }
 
-        userNick = nick;
-        userPhone = snap.val().phone;
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        initAppListeners();
-        toast("Вы успешно вошли!");
+            userNick = nick; 
+            userPhone = data.phone;
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            initAppListeners();
+            toast("Вы успешно вошли!");
+        }).catch(err => {
+            console.error(err);
+            toast("Ошибка входа!");
+        });
     }
 
-    // --- СМЕНА НИКНЕЙМА ---
     async function changeNickname() {
         const newNick = document.getElementById('new-nick-input').value.trim();
-        if(!newNick) return toast("Введите новый никнейм!");
-        if(newNick === userNick) return toast("Новый ник совпадает с текущим!");
-
-        // Ограничение смены ника на спец-ники
+        if(!newNick || newNick === userNick) return toast("Введите корректный новый ник!");
         if((newNick.toLowerCase() === 'президент мирон' || newNick.toLowerCase() === 'мирон') && myRole < 4) {
-            return toast("Этот ник зарезервирован для Президента!");
+            return toast("Этот ник зарезервирован!");
         }
 
         const checkSnap = await db.ref('users/' + newNick).once('value');
-        if(checkSnap.exists()) return toast("Никнейм уже занят!");
+        if(checkSnap.exists()) return toast("Никнейм занят!");
 
         db.ref('users/' + userNick).off();
-
         await db.ref('users/' + newNick).set(userData);
         await db.ref('users/' + userNick).remove();
 
-        const oldNick = userNick;
         userNick = newNick;
-
-        notify(userNick, `✏️ Вы сменили ник с ${oldNick} на ${userNick}`);
+        notify(userNick, `✏️ Вы сменили никнейм на ${userNick}`);
         document.getElementById('new-nick-input').value = '';
-        toast("Никнейм успешно изменён!");
-
+        toast("Никнейм изменён!");
         initAppListeners();
     }
 
     function setTab(t, el) { 
         document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
         document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
-        document.getElementById('tab-' + t).classList.remove('hidden'); el.classList.add('active'); 
+        document.getElementById('tab-' + t).classList.remove('hidden'); 
+        el.classList.add('active'); 
     }
-    function toggleNotifications() { const drop = document.getElementById('notif-drop'); drop.style.display = drop.style.display === 'block' ? 'none' : 'block'; }
+
+    function toggleNotifications() { 
+        const drop = document.getElementById('notif-drop'); 
+        drop.style.display = drop.style.display === 'block' ? 'none' : 'block'; 
+    }
 
     function initAppListeners() {
         db.ref('users/' + userNick).on('value', s => {
@@ -411,6 +503,10 @@
             if(userData.isBanned) { alert("Ваш аккаунт забанен."); location.reload(); }
             myRole = userData.role || 0;
             updateUI();
+        });
+
+        db.ref('treasury').on('value', s => {
+            document.getElementById('treasury-bal').innerText = (s.val() || 0) + " ₽";
         });
 
         db.ref('users/' + userNick + '/notifications').on('value', s => {
@@ -422,6 +518,7 @@
         });
 
         db.ref('news').on('value', s => renderList(s.val(), 'news-feed', renderNewsItem));
+        db.ref('laws').on('value', s => renderList(s.val(), 'laws-feed', renderLawItem));
         db.ref('wb').on('value', s => renderList(s.val(), 'wb-list', renderWbItem));
         db.ref('assets').on('value', s => renderList(s.val(), 'assets-list', renderAssetItem));
         db.ref('doc_requests').on('value', s => renderAdminDocs(s.val()));
@@ -437,17 +534,41 @@
         document.getElementById('p-role').innerText = ROLES[myRole];
         document.getElementById('p-job').innerText = userData.job || "Безработный";
         
-        const assetCount = userData.assets ? Object.keys(userData.assets).length : 0;
-        document.getElementById('tax-amount').innerText = assetCount * 500;
+        document.getElementById('job-title').innerText = userData.job || "Безработный";
+        document.getElementById('job-salary').innerText = (userData.salary || 0) + " ₽";
+        
+        const now = Date.now();
+        const nextPay = userData.nextPay || 0;
+        if (userData.salary > 0 && now >= nextPay) {
+            document.getElementById('job-next-pay').innerText = "Доступна к получению!";
+            document.getElementById('claim-salary-btn').disabled = false;
+        } else if (userData.salary > 0) {
+            const hoursLeft = Math.ceil((nextPay - now) / (1000 * 60 * 60));
+            document.getElementById('job-next-pay').innerText = `Через ${hoursLeft} ч.`;
+            document.getElementById('claim-salary-btn').disabled = true;
+        } else {
+            document.getElementById('job-next-pay').innerText = "Нет работы";
+            document.getElementById('claim-salary-btn').disabled = true;
+        }
+
+        let totalTax = 0;
+        if(userData.salary > 0) totalTax += Math.round(userData.salary * 0.08);
+        
+        const myAsts = userData.assets || {};
+        Object.values(myAsts).forEach(a => {
+            if(a.type === 'car') totalTax += Math.round(a.price * 0.05);
+            else if(a.type === 'house') totalTax += Math.round(a.price * 0.07);
+        });
+        
+        document.getElementById('tax-amount').innerText = totalTax;
 
         const myDocs = userData.docs || {};
         document.getElementById('my-docs-list').innerHTML = Object.keys(myDocs).length ? 
             Object.values(myDocs).map(d => `<div class="rf-doc"><div class="rf-title">${d.type}</div><div class="rf-field">ФИО:</div><div class="rf-value">${d.fio}</div><div class="rf-field">Данные:</div><div class="rf-value">${d.age}</div></div>`).join('') 
             : "У вас пока нет оформленных документов.";
 
-        const myAsts = userData.assets || {};
         document.getElementById('my-assets-list').innerHTML = Object.keys(myAsts).length ? 
-            Object.values(myAsts).map(a => `<div class="item-row"><b>${a}</b></div>`).join('') : "Ничего нет.";
+            Object.values(myAsts).map(a => `<div class="item-row"><b>${a.name} (${a.type === 'car'?'Авто':'Жильё'})</b> <span>${a.price} ₽</span></div>`).join('') : "Ничего нет.";
 
         document.getElementById('nav-admin').classList.toggle('hidden', myRole < 1);
         document.getElementById('adm-docs-sec').classList.toggle('hidden', myRole < 1);
@@ -456,6 +577,9 @@
         document.getElementById('adm-users-sec').classList.toggle('hidden', myRole < 3);
         document.getElementById('adm-roles-sec').classList.toggle('hidden', myRole < 3);
         
+        document.getElementById('treasury-card').classList.toggle('hidden', myRole < 4);
+        document.getElementById('admin-laws-box').classList.toggle('hidden', myRole < 4);
+
         if (myRole >= 4) {
             document.getElementById('opt-pres').classList.remove('hidden');
             document.getElementById('opt-ga').classList.remove('hidden');
@@ -467,6 +591,58 @@
         document.getElementById(elId).innerHTML = data ? Object.entries(data).reverse().map(([id, item]) => htmlFunc(id, item)).join('') : "<p style='color:gray'>Пусто</p>";
     }
 
+    async function claimSalary() {
+        if(!userData.salary || userData.salary <= 0) return toast("У вас нет работы!");
+        const now = Date.now();
+        if(userData.nextPay && now < userData.nextPay) return toast("Время выплаты ещё не пришло!");
+
+        const weekMs = 7 * 24 * 60 * 60 * 1000;
+        await db.ref('users/' + userNick + '/balance').transaction(b => (b||0) + userData.salary);
+        await db.ref('users/' + userNick + '/nextPay').set(now + weekMs);
+        toast(`Вы получили зарплату: ${userData.salary} ₽`);
+    }
+
+    async function quitJob() {
+        if(!userData.job || userData.job === "Безработный") return toast("Вы нигде не работаете!");
+        await db.ref('users/' + userNick).update({ job: "Безработный", salary: 0, nextPay: 0 });
+        toast("Вы уволились с работы.");
+    }
+
+    async function payTaxes() {
+        const tax = parseInt(document.getElementById('tax-amount').innerText);
+        if(tax === 0) return toast("У вас нет налогов к оплате!");
+        if(userData.balance < tax) return toast("Недостаточно средств!");
+
+        await db.ref('users/' + userNick + '/balance').transaction(b => b - tax);
+        await db.ref('treasury').transaction(t => (t||0) + tax);
+        toast("Налоги успешно уплачены в Казну!");
+    }
+
+    function openTreasuryModal() { document.getElementById('modal-treasury').classList.remove('hidden'); }
+    function closeTreasuryModal() { document.getElementById('modal-treasury').classList.add('hidden'); }
+    
+    async function payoutFromTreasury() {
+        const target = document.getElementById('tr-target').value.trim();
+        const amount = parseInt(document.getElementById('tr-amount').value);
+        const reason = document.getElementById('tr-reason').value.trim();
+
+        if(!target || !amount || amount <= 0 || !reason) return toast("Заполните все поля!");
+
+        const trSnap = await db.ref('treasury').once('value');
+        const currentTreasury = trSnap.val() || 0;
+        if(currentTreasury < amount) return toast("В казне недостаточно средств!");
+
+        const tSnap = await db.ref('users/' + target).once('value');
+        if(!tSnap.exists()) return toast("Получатель не найден!");
+
+        await db.ref('treasury').transaction(t => t - amount);
+        await db.ref('users/' + target + '/balance').transaction(b => (b||0) + amount);
+        notify(target, `🏛️ Из Госказны вам выделено ${amount} ₽. Цель: ${reason}`);
+        
+        toast("Средства выделены!");
+        closeTreasuryModal();
+    }
+
     function postNews() {
         const text = document.getElementById('news-text').value.trim();
         if(!text) return;
@@ -475,97 +651,199 @@
     }
     const renderNewsItem = (id, n) => `<div class="card" style="padding:15px; margin-bottom:10px;"><b>🗣️ ${n.author}</b> <span style="font-size:11px;color:gray">${n.time}</span><p style="margin:5px 0 0 0;font-size:14px;">${n.text}</p>${myRole >= 2 ? `<button class="btn btn-danger" style="padding:5px; margin-top:10px;" onclick="db.ref('news/${id}').remove()">Удалить</button>` : ''}</div>`;
 
+    function publishLaw() {
+        const title = document.getElementById('law-title-input').value.trim();
+        const text = document.getElementById('law-text-input').value.trim();
+        if(!title || !text) return toast("Заполните все поля закона!");
+
+        db.ref('laws').push({ title, text, date: new Date().toLocaleDateString() });
+        document.getElementById('law-title-input').value = '';
+        document.getElementById('law-text-input').value = '';
+        toast("Закон успешно издан!");
+    }
+    const renderLawItem = (id, l) => `<div class="card" style="padding:15px; margin-bottom:10px; border-left: 4px solid var(--main);"><b>📜 ${l.title}</b> <small style="color:gray;">(${l.date})</small><p style="margin:8px 0 0 0; font-size:14px; white-space: pre-wrap;">${l.text}</p>${myRole >= 4 ? `<button class="btn btn-danger" style="padding:5px; margin-top:10px;" onclick="db.ref('laws/${id}').remove()">Удалить закон</button>` : ''}</div>`;
+
+    function addAsset() {
+        const name = document.getElementById('ast-name').value.trim(); 
+        const price = parseInt(document.getElementById('ast-price').value);
+        const type = document.getElementById('ast-type').value;
+        if(!name || !price) return toast("Заполните все поля!");
+        db.ref('assets').push({ name, price, type }); toast("Имущество выставлено");
+    }
+
+    async function buyAsset(id, name, price, type) {
+        if(userData.balance < price) return toast("Нет денег!");
+        await db.ref('users/' + userNick + '/balance').transaction(b => b - price);
+        await db.ref('users/' + userNick + '/assets').push({ name, price, type });
+        await db.ref('assets/' + id).remove();
+        toast("Имущество приобретено!");
+    }
+    const renderAssetItem = (id, a) => `<div class="item-row card" style="padding:15px; margin-bottom:10px;"><div><b>${a.name}</b><br><small style="color:gray">${a.type === 'car' ? '🚗 Транспорт' : '🏠 Недвижимость'}</small></div><div><b>${a.price} ₽</b><br><button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="buyAsset('${id}', '${a.name}', ${a.price}, '${a.type}')">Купить</button> ${myRole >= 3 ? `<button class="btn btn-danger" style="padding:5px; margin-top:5px;" onclick="db.ref('assets/${id}').remove()">Снять</button>` : ''}</div></div>`;
+
+    function openAdminModal(actionType) {
+        const target = document.getElementById('adm-target-global').value.trim();
+        if(!target && actionType !== 'print') return toast("Укажите никнейм игрока!");
+
+        currentAdminActionType = actionType;
+        document.getElementById('modal-subtarget').innerText = target ? `Игрок: ${target}` : "Для себя";
+        const body = document.getElementById('modal-body');
+        body.innerHTML = '';
+
+        if(actionType === 'fine') {
+            document.getElementById('modal-title').innerText = "🚨 Выписать Штраф";
+            body.innerHTML = `
+                <input type="number" id="m-fine-sum" placeholder="Сумма штрафа ₽">
+                <input type="text" id="m-fine-reason" placeholder="Причина штрафа">
+            `;
+        } else if(actionType === 'job') {
+            document.getElementById('modal-title').innerText = "💼 Трудоустройство";
+            body.innerHTML = `
+                <input type="text" id="m-job-title" placeholder="Название должности">
+                <input type="number" id="m-job-salary" placeholder="Еженедельная ЗП ₽">
+            `;
+        } else if(actionType === 'mute') {
+            document.getElementById('modal-title').innerText = "🤐 Выдать Мут чата";
+            body.innerHTML = `
+                <input type="number" id="m-mute-time" placeholder="Срок в минутах">
+                <input type="text" id="m-mute-reason" placeholder="Причина мута">
+            `;
+        } else if(actionType === 'print') {
+            document.getElementById('modal-title').innerText = "🖨️ Печать Денег";
+            body.innerHTML = `<input type="number" id="m-print-sum" placeholder="Сумма начисления ₽">`;
+        }
+
+        document.getElementById('modal-admin').classList.remove('hidden');
+    }
+
+    function closeAdminModal() { document.getElementById('modal-admin').classList.add('hidden'); }
+
+    async function confirmAdminAction() {
+        const target = document.getElementById('adm-target-global').value.trim();
+
+        if(currentAdminActionType === 'fine') {
+            const sum = parseInt(document.getElementById('m-fine-sum').value);
+            const reason = document.getElementById('m-fine-reason').value.trim();
+            if(!sum || !reason) return toast("Заполните поля!");
+
+            await db.ref('users/' + target + '/balance').transaction(b => (b||0) - sum);
+            notify(target, `🚨 Вам выписан штраф на сумму ${sum} ₽. Причина: ${reason}`);
+            toast("Штраф выписан");
+        } 
+        else if(currentAdminActionType === 'job') {
+            const title = document.getElementById('m-job-title').value.trim();
+            const salary = parseInt(document.getElementById('m-job-salary').value);
+            if(!title || !salary) return toast("Заполните поля!");
+
+            const weekMs = 7 * 24 * 60 * 60 * 1000;
+            await db.ref('users/' + target).update({ 
+                job: title, 
+                salary: salary,
+                nextPay: Date.now() + weekMs 
+            });
+            notify(target, `💼 Вы устроены на должность: ${title} с ЗП: ${salary} ₽/нед.`);
+            toast("Игрок устроен на работу");
+        } 
+        else if(currentAdminActionType === 'mute') {
+            const time = parseInt(document.getElementById('m-mute-time').value);
+            const reason = document.getElementById('m-mute-reason').value.trim();
+            if(!time) return toast("Укажите время!");
+
+            const muteMs = Date.now() + (time * 60000);
+            await db.ref('users/' + target).update({ muteEnd: muteMs });
+            db.ref('chat').push({ author: 'СИСТЕМА', text: `Пользователь ${target} получил мут на ${time} мин. Причина: ${reason}`, role: 'SYSTEM' });
+            toast("Мут выдан");
+        } 
+    else if(currentAdminActionType === 'print') {
+            const sum = parseInt(document.getElementById('m-print-sum').value) || 10000;
+            await db.ref('users/' + userNick + '/balance').transaction(b => (b||0) + sum);
+            toast(`Напечатано ${sum} ₽`);
+        }
+
+        closeAdminModal();
+    }
+
+    async function applyRoleAction() {
+        const target = document.getElementById('adm-target-global').value.trim();
+        const role = parseInt(document.getElementById('adm-role-sel').value);
+        if(!target) return toast("Укажите игрока!");
+        if(role >= myRole && myRole < 4) return toast("Нельзя выдать равную или высшую роль!");
+
+        await db.ref('users/' + target).update({ role });
+        notify(target, `👑 Ваша роль изменена на: ${ROLES[role]}`);
+        toast("Роль обновлена");
+    }
+
+    async function applyBanAction() {
+        const target = document.getElementById('adm-target-global').value.trim();
+        if(!target) return toast("Укажите игрока!");
+        await db.ref('users/' + target).update({ isBanned: true });
+        toast("Аккаунт заблокирован!");
+    }
+
     async function transferMoney() {
         const phone = document.getElementById('transfer-phone').value.trim();
         const sum = parseInt(document.getElementById('transfer-sum').value);
-        if(!phone || phone === '+7' || !sum || sum <= 0 || sum > userData.balance) return toast("Ошибка ввода или нехватка средств!");
+        if(!phone || phone === '+7' || !sum || sum <= 0 || sum > userData.balance) return toast("Ошибка перевода!");
         if(phone === userData.phone) return toast("Нельзя перевести себе!");
 
         const usersSnap = await db.ref('users').once('value');
         let targetNick = null;
         usersSnap.forEach(child => { if(child.val().phone === phone) targetNick = child.key; });
         
-        if(!targetNick) return toast("Пользователь с таким номером не найден!");
+        if(!targetNick) return toast("Пользователь не найден!");
         
         await db.ref('users/' + userNick + '/balance').transaction(b => (b||0) - sum);
         await db.ref('users/' + targetNick + '/balance').transaction(b => (b||0) + sum);
-        notify(targetNick, `💸 Вам поступил перевод ${sum} ₽`);
-        toast("Перевод успешен!");
-    }
-    function payTaxes() {
-        const tax = parseInt(document.getElementById('tax-amount').innerText);
-        if(tax === 0) return toast("У вас нет долгов по налогам!");
-        if(userData.balance < tax) return toast("Недостаточно средств!");
-        db.ref('users/' + userNick + '/balance').transaction(b => b - tax); toast("Налоги оплачены!");
+        notify(targetNick, `💸 Поступил перевод ${sum} ₽`);
+        toast("Успешно!");
     }
 
     function addWbItem() {
-        const name = document.getElementById('wb-name').value; const price = parseInt(document.getElementById('wb-price').value);
+        const name = document.getElementById('wb-name').value; 
+        const price = parseInt(document.getElementById('wb-price').value);
         if(!name || !price) return;
-        db.ref('wb').push({ name, price, owner: userNick }); toast("Товар выставлен!");
+        db.ref('wb').push({ name, price, owner: userNick }); toast("Выставлено!");
     }
+
     async function buyWb(id, price, owner) {
         if(userData.balance < price) return toast("Нет денег!");
         await db.ref('users/' + userNick + '/balance').transaction(b => b - price);
         await db.ref('users/' + owner + '/balance').transaction(b => b + price);
         await db.ref('wb/' + id).remove();
-        notify(owner, `🛍️ Ваш товар купил ${userNick} за ${price} ₽`);
-        toast("Успешная покупка!");
+        notify(owner, `🛍️ Товар куплен за ${price} ₽`); toast("Куплено!");
     }
-    function delWb(id, owner) {
-        const reason = prompt("Причина удаления товара?");
-        if(!reason) return;
-        db.ref('wb/' + id).remove();
-        notify(owner, `🚫 Администратор удалил ваш товар. Причина: ${reason}`);
-    }
-    const renderWbItem = (id, i) => `<div class="item-row card" style="padding:15px; margin-bottom:10px;"><div><b style="font-size:16px;">${i.name}</b><br><small style="color:gray">Прод: ${i.owner}</small></div><div><b style="color:var(--main)">${i.price} ₽</b><br><button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="buyWb('${id}', ${i.price}, '${i.owner}')">Купить</button> ${myRole >= 2 ? `<br><button class="btn btn-danger" style="padding:5px; margin-top:5px;" onclick="delWb('${id}', '${i.owner}')">Удалить</button>` : ''}</div></div>`;
+    const renderWbItem = (id, i) => `<div class="item-row card" style="padding:15px; margin-bottom:10px;"><div><b>${i.name}</b><br><small style="color:gray">Прод: ${i.owner}</small></div><div><b>${i.price} ₽</b><br><button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="buyWb('${id}', ${i.price}, '${i.owner}')">Купить</button></div></div>`;
 
     function applyForDoc() {
         const type = document.getElementById('doc-type').options[document.getElementById('doc-type').selectedIndex].text;
-        const fio = document.getElementById('doc-fio').value; const age = document.getElementById('doc-age').value;
+        const fio = document.getElementById('doc-fio').value; 
+        const age = document.getElementById('doc-age').value;
         if(!fio || !age) return toast("Заполните данные!");
         db.ref('doc_requests').push({ user: userNick, type, fio, age });
-        toast("Заявка отправлена модераторам!");
-        
-        db.ref('users').once('value', s => {
-            s.forEach(c => { if(c.val().role >= 1) notify(c.key, `🛂 Новая заявка на документ от ${userNick}`); });
-        });
+        toast("Заявка отправлена!");
     }
+
     function renderAdminDocs(data) {
         document.getElementById('adm-docs-list').innerHTML = data ? Object.entries(data).map(([id, d]) => `
             <div class="card" style="padding:10px; margin-bottom:5px;">
-                <b>${d.user}</b> просит <b>${d.type}</b><br><small>${d.fio}, ${d.age}</small>
+                <b>${d.user}</b>: ${d.type}<br><small>${d.fio}, ${d.age}</small>
                 <div style="display:flex; gap:5px; margin-top:5px;">
-                    <button class="btn btn-success" style="padding:5px; margin:0;" onclick="approveDoc('${id}', '${d.user}', '${d.type}', '${d.fio}', '${d.age}')">Одобрить</button>
-                    <button class="btn btn-danger" style="padding:5px; margin:0;" onclick="rejectDoc('${id}', '${d.user}')">Отказ</button>
+                    <button class="btn btn-success" style="padding:5px;" onclick="approveDoc('${id}', '${d.user}', '${d.type}', '${d.fio}', '${d.age}')">Одобрить</button>
+                    <button class="btn btn-danger" style="padding:5px;" onclick="rejectDoc('${id}', '${d.user}')">Отказ</button>
                 </div>
-            </div>`).join('') : "<small>Нет новых заявок</small>";
+            </div>`).join('') : "<small>Нет заявок</small>";
     }
+
     async function approveDoc(reqId, target, type, fio, age) {
         await db.ref('users/' + target + '/docs').push({ type, fio, age });
         await db.ref('doc_requests/' + reqId).remove();
-        notify(target, `✅ Ваша заявка на ${type} ОДОБРЕНА!`); toast("Одобрено");
-    }
-    function rejectDoc(reqId, target) {
-        const reason = prompt("Причина отказа?");
-        if(!reason) return;
-        db.ref('doc_requests/' + reqId).remove();
-        notify(target, `❌ Ваша заявка на документы отклонена. Причина: ${reason}`); toast("Отклонено");
+        notify(target, `✅ Заявка на ${type} ОДОБРЕНА!`); toast("Одобрено");
     }
 
-    function addAsset() {
-        const name = document.getElementById('ast-name').value; const price = parseInt(document.getElementById('ast-price').value);
-        if(!name || !price) return;
-        db.ref('assets').push({ name, price }); toast("Выставлено на продажу");
+    function rejectDoc(reqId, target) {
+        db.ref('doc_requests/' + reqId).remove();
+        notify(target, `❌ Заявка на документы отклонена.`); toast("Отклонено");
     }
-    async function buyAsset(id, name, price) {
-        if(userData.balance < price) return toast("Нет денег!");
-        await db.ref('users/' + userNick + '/balance').transaction(b => b - price);
-        await db.ref('users/' + userNick + '/assets').push(name);
-        await db.ref('assets/' + id).remove();
-        toast("Имущество приобретено!");
-    }
-    const renderAssetItem = (id, a) => `<div class="item-row card" style="padding:15px; margin-bottom:10px;"><div><b>${a.name}</b></div><div><b>${a.price} ₽</b><br><button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="buyAsset('${id}', '${a.name}', ${a.price})">Купить</button> ${myRole >= 3 ? `<button class="btn btn-danger" style="padding:5px; margin-top:5px;" onclick="db.ref('assets/${id}').remove()">Снять</button>` : ''}</div></div>`;
 
     function sendChat() {
         const text = document.getElementById('chat-input').value.trim();
@@ -577,6 +855,7 @@
         db.ref('chat').push({ author: userNick, text, role: ROLES[myRole] });
         document.getElementById('chat-input').value = '';
     }
+
     function renderChat(data) {
         const box = document.getElementById('chat-messages');
         box.innerHTML = data ? Object.values(data).map(m => `
@@ -585,50 +864,6 @@
                 <div class="msg-bubble" style="${m.author === userNick ? 'background:var(--main); color:white;' : ''}">${m.text}</div>
             </div>`).join('') : "<div class='msg-sys'>Чат пуст</div>";
         box.scrollTop = box.scrollHeight;
-    }
-
-    async function admAction(action) {
-        const target = document.getElementById('adm-target').value.trim();
-        const val = parseInt(document.getElementById('adm-val').value);
-        const text = document.getElementById('adm-text').value.trim();
-        
-        if(action === 'print') {
-            const sum = val || 1000;
-            db.ref('users/' + userNick + '/balance').transaction(b => (b||0) + sum);
-            return toast(`Напечатано ${sum} ₽`);
-        }
-        
-        if(!target) return toast("Укажите ник игрока!");
-        const tSnap = await db.ref('users/' + target).once('value');
-        if(!tSnap.exists()) return toast("Игрок не найден!");
-
-        if(action === 'fine') {
-            db.ref('users/' + target + '/balance').transaction(b => (b||0) - (val||0));
-            notify(target, `🚨 Вам выписан штраф на сумму ${val} ₽. Причина: ${text}`);
-            toast("Штраф выписан");
-        } 
-        else if(action === 'job') {
-            db.ref('users/' + target).update({ job: text });
-            notify(target, `💼 Вы устроены на новую должность: ${text}`);
-            toast("Устроен");
-        } 
-        else if(action === 'mute') {
-            const muteMs = Date.now() + ((val || 10) * 60000);
-            db.ref('users/' + target).update({ muteEnd: muteMs });
-            db.ref('chat').push({ author: 'СИСТЕМА', text: `Пользователь ${target} получил мут на ${val} минут.`, role: 'SYSTEM' });
-            toast("Мут выдан");
-        }
-        else if(action === 'role') {
-            const role = parseInt(document.getElementById('adm-role-sel').value);
-            if(role >= myRole && myRole < 4) return toast("Вы не можете выдать равную или высшую роль!");
-            db.ref('users/' + target).update({ role });
-            notify(target, `👑 Ваша роль изменена на: ${ROLES[role]}`);
-            toast("Роль обновлена");
-        }
-        else if(action === 'ban' && myRole === 4) {
-            db.ref('users/' + target).update({ isBanned: true });
-            toast("Игрок заблокирован!");
-        }
     }
 
     function notify(targetNick, text) { db.ref('users/' + targetNick + '/notifications').push({ text, time: Date.now() }); }
